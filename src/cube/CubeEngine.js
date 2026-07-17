@@ -50,6 +50,13 @@ export default class CubeEngine {
         metalness: 0.05,
       });
     }
+    // Single gray material used to dim cubies outside the highlighted layer
+    // (focus mode). Focus persists until reset / scramble clears it.
+    this.stickerMatDim = new THREE.MeshStandardMaterial({
+      color: 0x2a2f3d,
+      roughness: 0.6,
+      metalness: 0.05,
+    });
 
     this._initScene();
     this._buildCubies();
@@ -237,10 +244,68 @@ export default class CubeEngine {
     this.queue.push({ __pause: ms });
   }
 
+  /** Dim every cubie not in `cubies` by swapping its stickers to the gray mat. */
+  setFocus(cubies) {
+    const set = new Set(cubies);
+    for (const c of this.cubies) {
+      const dim = !set.has(c);
+      c.userData.dimmed = dim;
+      c.traverse((child) => {
+        if (child.isMesh && child.userData.key !== undefined) {
+          child.material = dim
+            ? this.stickerMatDim
+            : this.stickerMats[child.userData.key];
+        }
+      });
+    }
+  }
+
+  /** Convenience: highlight every cubie whose `axis` coordinate equals `layer`. */
+  setFocusLayer(axis, layer) {
+    const layerCubies = this.cubies.filter(
+      (c) => Math.round(c.userData.pos[axis]) === layer,
+    );
+    this.setFocus(layerCubies);
+  }
+
+  /** Restore original sticker materials on every dimmed cubie. */
+  clearFocus() {
+    for (const c of this.cubies) {
+      if (!c.userData.dimmed) continue;
+      c.userData.dimmed = false;
+      c.traverse((child) => {
+        if (child.isMesh && child.userData.key !== undefined) {
+          child.material = this.stickerMats[child.userData.key];
+        }
+      });
+    }
+  }
+
+  /**
+   * Play `seq` with the given layer highlighted: dim everything outside the
+   * layer, then animate the moves. The dimming persists after playback so the
+   * user can inspect the result; reset / scramble clears it.
+   */
+  playWithFocusLayer(axis, layer, input) {
+    this.setFocusLayer(axis, layer);
+    this.enqueue(input);
+  }
+
+  /**
+   * Highlight the given layer without playing anything — used when a formula
+   * is selected so the user can see the case's signature (e.g. the yellow
+   * cross + corners for OLL) before hitting Play. The dimming persists until
+   * reset / scramble clears it.
+   */
+  previewFocusLayer(axis, layer) {
+    this.setFocusLayer(axis, layer);
+  }
+
   scramble(n = 20) {
     this.queue = [];
     this.current = null;
     this.pauseUntil = 0;
+    this.clearFocus();
     const seq = randomScramble(n);
     this.queue.push(...seq);
     return seq;
@@ -342,6 +407,7 @@ export default class CubeEngine {
     this.stickerGeo.dispose();
     this.bodyMat.dispose();
     Object.values(this.stickerMats).forEach((m) => m.dispose());
+    this.stickerMatDim.dispose();
     if (this.renderer) {
       this.renderer.dispose();
       if (this.renderer.domElement.parentNode) {

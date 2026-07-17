@@ -68,24 +68,29 @@ export default function FormulaSheet() {
 
   /** Select a formula: reset cube, then instantly apply the setup so the cube
    *  shows the "before" case this formula solves — no animation, so the user's
-   *  attention is reserved for the Play step. */
+   *  attention is reserved for the Play step. The whole U layer is kept in
+   *  colour (the case's signature: cross / fish + corners) while the lower two
+   *  layers are dimmed. */
   const selectFormula = (entry) => {
     setSelectedId(entry.id);
     const viewer = viewerRef.current;
     if (!viewer) return;
     viewer.reset();
     viewer.applyInstant(entry.setup);
+    viewer.previewFocusLayer('y', 1);
   };
 
   /** Play the solving algorithm. If the card wasn't selected yet, select it
-   *  first (which queues the setup), then queue the algorithm. */
+   *  first (which queues the setup), then queue the algorithm with the U layer
+   *  highlighted. Non-affected cubies are dimmed so the user can focus on the
+   *  pieces being adjusted. */
   const playAlgorithm = (entry) => {
     const viewer = viewerRef.current;
     if (!viewer) return;
     if (selectedId !== entry.id) {
       selectFormula(entry);
     }
-    viewer.play(entry.algorithm);
+    viewer.playWithFocusLayer('y', 1, entry.algorithm);
   };
 
   return (
