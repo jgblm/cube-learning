@@ -1,0 +1,22 @@
+{
+  "name": "rubiks-cube-mastery",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "3x3 Rubik's cube learning site: from beginner to master, with an interactive 3D cube, step-by-step lessons, formula cheat sheet and an auto-solve demo.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2",
+    "three": "^0.160.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.2",
+    "vite": "^5.4.8"
+  }
+}
