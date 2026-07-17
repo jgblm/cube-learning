@@ -50,6 +50,14 @@ export default class CubeEngine {
         metalness: 0.05,
       });
     }
+    // Muted grey used to "dim" stickers the current formula never touches, so
+    // learners can focus on the pieces the algorithm actually moves.
+    this.grayMat = new THREE.MeshStandardMaterial({
+      color: 0x474d59,
+      roughness: 0.7,
+      metalness: 0.0,
+    });
+    this.highlightActive = false;
 
     this._initScene();
     this._buildCubies();
@@ -132,7 +140,9 @@ export default class CubeEngine {
 
     for (const [show, face, color] of stickers) {
       if (!show) continue;
-      const sticker = new THREE.Mesh(this.stickerGeo, this.stickerMats[colorKey(color)]);
+      const key = colorKey(color);
+      const sticker = new THREE.Mesh(this.stickerGeo, this.stickerMats[key]);
+      sticker.userData.key = key;
       this._orientSticker(sticker, face);
       cubie.add(sticker);
     }
@@ -208,10 +218,77 @@ export default class CubeEngine {
     this.queue.push({ __pause: ms });
   }
 
+  /**
+   * Dim every sticker the given sequence never touches, so the pieces the
+   * formula actually manipulates stand out. `seq` should be the full playback
+   * (setup + algorithm); the union of touched cubies is computed once.
+   */
+  highlight(seq) {
+    const touched = this._touchPositions(seq);
+    for (const c of this.cubies) {
+      const p = c.userData.pos;
+      const dim = !touched.some((t) => t.x === p.x && t.y === p.y && t.z === p.z);
+      c.traverse((o) => {
+        if (o.isMesh && o.userData.key) {
+          o.material = dim ? this.grayMat : this.stickerMats[o.userData.key];
+        }
+      });
+    }
+    this.highlightActive = true;
+  }
+
+  /** Remove the highlight and restore full colour. */
+  clearHighlight() {
+    for (const c of this.cubies) {
+      c.traverse((o) => {
+        if (o.isMesh && o.userData.key) o.material = this.stickerMats[o.userData.key];
+      });
+    }
+    this.highlightActive = false;
+  }
+
+  /**
+   * Simulate `seq` from solved and return the set of logical positions that
+   * get turned. Whole-cube rotations (x/y/z) reorient the tracking frame but do
+   * not count as "touched", since they move nothing relative to the cube.
+   */
+  _touchPositions(seq) {
+    const positions = [];
+    for (let x = -1; x <= 1; x += 1) {
+      for (let y = -1; y <= 1; y += 1) {
+        for (let z = -1; z <= 1; z += 1) {
+          if (x === 0 && y === 0 && z === 0) continue;
+          positions.push(new THREE.Vector3(x, y, z));
+        }
+      }
+    }
+    const touched = new Set();
+    const mark = (v) => touched.add(`${v.x},${v.y},${v.z}`);
+
+    for (const move of toSequence(seq)) {
+      const { axis, layer, axisVec, angle } = this._resolve(move);
+      if (layer === null) {
+        // Whole-cube rotation: coordinates change but nothing is "touched".
+        for (const p of positions) p.applyAxisAngle(axisVec, angle).round();
+        continue;
+      }
+      for (const p of positions) {
+        if (Math.round(p[axis]) === layer) mark(p);
+      }
+      for (const p of positions) p.applyAxisAngle(axisVec, angle).round();
+    }
+
+    return [...touched].map((s) => {
+      const [x, y, z] = s.split(',').map(Number);
+      return new THREE.Vector3(x, y, z);
+    });
+  }
+
   scramble(n = 20) {
     this.queue = [];
     this.current = null;
     this.pauseUntil = 0;
+    this.clearHighlight();
     const seq = randomScramble(n);
     this.queue.push(...seq);
     return seq;
@@ -227,6 +304,7 @@ export default class CubeEngine {
     for (const c of this.cubies) this.group.remove(c);
     this.cubies = [];
     this._buildCubies();
+    this.highlightActive = false;
   }
 
   setSpeed(mult) {
@@ -312,6 +390,7 @@ export default class CubeEngine {
     this.bodyGeo.dispose();
     this.stickerGeo.dispose();
     this.bodyMat.dispose();
+    this.grayMat.dispose();
     Object.values(this.stickerMats).forEach((m) => m.dispose());
     if (this.renderer) {
       this.renderer.dispose();

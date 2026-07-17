@@ -15,9 +15,12 @@ export default function LessonView() {
     const viewer = viewerRef.current;
     if (!viewer) return;
     viewer.reset();
-    // First reach the algorithm's real "before" case by applying its inverse
-    // from solved, hold so the pattern is visible, then play it forward.
-    viewer.play(invertSequence(toSequence(algorithm)));
+    // Dim stickers the algorithm never touches so the relevant pieces stand out,
+    // then reach the algorithm's real "before" case by applying its inverse from
+    // solved, hold so the pattern is visible, then play it forward.
+    const setup = invertSequence(toSequence(algorithm));
+    viewer.highlight([...setup, ...toSequence(algorithm)]);
+    viewer.play(setup);
     viewer.pause(900);
     viewer.play(algorithm);
   };

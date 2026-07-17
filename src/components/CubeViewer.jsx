@@ -39,6 +39,8 @@ const CubeViewer = forwardRef(function CubeViewer(_props, ref) {
     reset: () => engineRef.current?.reset(),
     pause: (ms) => engineRef.current?.pause(ms),
     setSpeed: (m) => engineRef.current?.setSpeed(m),
+    highlight: (seq) => engineRef.current?.highlight(seq),
+    clearHighlight: () => engineRef.current?.clearHighlight(),
   }));
 
   const onKey = (e) => {

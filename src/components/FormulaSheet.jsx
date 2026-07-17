@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import CubeViewer from './CubeViewer.jsx';
 import { OLL_2LOOK, PLL_COMMON } from '../cube/algorithms.js';
 import { toSequence } from '../cube/moves.js';
@@ -35,9 +35,12 @@ function FaceSVG({ pattern }) {
   );
 }
 
-function Card({ entry, onPlay, lang }) {
+function Card({ entry, onPlay, lang, isSelected, onSelect }) {
   return (
-    <div className="formula-card">
+    <div
+      className={`formula-card${isSelected ? ' selected' : ''}`}
+      onClick={() => onSelect(entry)}
+    >
       <div className="name">
         {tx(entry.name, lang)}
         {entry.hint && (
@@ -46,7 +49,13 @@ function Card({ entry, onPlay, lang }) {
       </div>
       {entry.pattern && <FaceSVG pattern={entry.pattern} />}
       <code>{entry.algorithm}</code>
-      <button className="play-btn" onClick={() => onPlay(entry)}>
+      <button
+        className="play-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          onPlay(entry);
+        }}
+      >
         {tx({ zh: '播放', en: 'Play' }, lang)}
       </button>
     </div>
@@ -56,15 +65,27 @@ function Card({ entry, onPlay, lang }) {
 export default function FormulaSheet() {
   const { lang } = useLang();
   const viewerRef = useRef(null);
+  const [selectedId, setSelectedId] = useState(null);
 
-  const play = (entry) => {
+  /** Select a formula: reset cube, highlight touched pieces, play setup so the
+   *  cube shows the "before" state that this formula solves. */
+  const selectFormula = (entry) => {
+    setSelectedId(entry.id);
     const viewer = viewerRef.current;
     if (!viewer) return;
     viewer.reset();
-    // Play the explicit setup (the algorithm's real "before" case) from a solved
-    // cube, hold so the pattern is visible, then play the algorithm to solve it.
+    viewer.highlight(`${entry.setup} ${entry.algorithm}`);
     viewer.play(toSequence(entry.setup));
-    viewer.pause(900);
+  };
+
+  /** Play the solving algorithm. If the card wasn't selected yet, select it
+   *  first (which queues the setup), then queue the algorithm. */
+  const playAlgorithm = (entry) => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+    if (selectedId !== entry.id) {
+      selectFormula(entry);
+    }
     viewer.play(entry.algorithm);
   };
 
@@ -74,8 +95,8 @@ export default function FormulaSheet() {
       <p className="section-sub">
         {tx(
           {
-            zh: '点击「播放」在魔方上观看公式转动。配色：上白下黄，前绿后蓝，左橙右红。',
-            en: 'Click "Play" to watch the algorithm on the cube. Scheme: white Up / yellow Down, green Front / blue Back, orange Left / red Right.',
+            zh: '点击卡片选中公式，魔方将展示待复原状态；再点击「播放」观看复原过程。配色：上白下黄，前绿后蓝，左橙右红。',
+            en: 'Click a card to select it — the cube shows the case to solve. Then click "Play" to watch the solution. Scheme: white Up / yellow Down, green Front / blue Back, orange Left / red Right.',
           },
           lang,
         )}
@@ -98,7 +119,14 @@ export default function FormulaSheet() {
       </h2>
       <div className="formula-grid">
         {OLL_2LOOK.map((e) => (
-          <Card key={e.id} entry={e} onPlay={play} lang={lang} />
+          <Card
+            key={e.id}
+            entry={e}
+            onPlay={playAlgorithm}
+            lang={lang}
+            isSelected={selectedId === e.id}
+            onSelect={selectFormula}
+          />
         ))}
       </div>
 
@@ -107,7 +135,14 @@ export default function FormulaSheet() {
       </h2>
       <div className="formula-grid">
         {PLL_COMMON.map((e) => (
-          <Card key={e.id} entry={e} onPlay={play} lang={lang} />
+          <Card
+            key={e.id}
+            entry={e}
+            onPlay={playAlgorithm}
+            lang={lang}
+            isSelected={selectedId === e.id}
+            onSelect={selectFormula}
+          />
         ))}
       </div>
     </div>
