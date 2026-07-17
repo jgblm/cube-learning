@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import CubeViewer from './CubeViewer.jsx';
 import { OLL_2LOOK, PLL_COMMON } from '../cube/algorithms.js';
+import { toSequence } from '../cube/moves.js';
 import { useLang, tx } from '../i18n/LangContext.jsx';
 
 /** Small 3x3 top-face diagram; 1 = yellow sticker. */
@@ -45,7 +46,7 @@ function Card({ entry, onPlay, lang }) {
       </div>
       {entry.pattern && <FaceSVG pattern={entry.pattern} />}
       <code>{entry.algorithm}</code>
-      <button className="play-btn" onClick={() => onPlay(entry.algorithm)}>
+      <button className="play-btn" onClick={() => onPlay(entry)}>
         {tx({ zh: '播放', en: 'Play' }, lang)}
       </button>
     </div>
@@ -56,9 +57,15 @@ export default function FormulaSheet() {
   const { lang } = useLang();
   const viewerRef = useRef(null);
 
-  const play = (algorithm) => {
-    viewerRef.current?.reset();
-    viewerRef.current?.play(algorithm);
+  const play = (entry) => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+    viewer.reset();
+    // Play the explicit setup (the algorithm's real "before" case) from a solved
+    // cube, hold so the pattern is visible, then play the algorithm to solve it.
+    viewer.play(toSequence(entry.setup));
+    viewer.pause(900);
+    viewer.play(entry.algorithm);
   };
 
   return (

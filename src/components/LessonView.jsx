@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import CubeViewer from './CubeViewer.jsx';
 import { LEVELS } from '../content/lessons.js';
+import { invertSequence, toSequence } from '../cube/moves.js';
 import { useLang, tx } from '../i18n/LangContext.jsx';
 
 export default function LessonView() {
@@ -11,8 +12,14 @@ export default function LessonView() {
   const selected = LEVELS.flatMap((l) => l.lessons).find((ls) => ls.id === selectedId);
 
   const play = (algorithm) => {
-    viewerRef.current?.reset();
-    viewerRef.current?.play(algorithm);
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+    viewer.reset();
+    // First reach the algorithm's real "before" case by applying its inverse
+    // from solved, hold so the pattern is visible, then play it forward.
+    viewer.play(invertSequence(toSequence(algorithm)));
+    viewer.pause(900);
+    viewer.play(algorithm);
   };
 
   return (

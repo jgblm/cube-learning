@@ -28,8 +28,9 @@ export default class CubeEngine {
   constructor(container) {
     this.container = container;
     this.cubies = [];
-    this.queue = []; // pending moves (normalised strings)
+    this.queue = []; // pending moves (normalised strings) or { __pause: ms } markers
     this.current = null; // { pivot, axisVec, angle, selected, start, duration }
+    this.pauseUntil = 0; // perf timestamp until which the queue is held
     this.speed = 1;
     this.disposed = false;
 
@@ -202,9 +203,15 @@ export default class CubeEngine {
     this.enqueue(input);
   }
 
+  /** Hold the queue for `ms` so a setup state is visible before the next move. */
+  pause(ms) {
+    this.queue.push({ __pause: ms });
+  }
+
   scramble(n = 20) {
     this.queue = [];
     this.current = null;
+    this.pauseUntil = 0;
     const seq = randomScramble(n);
     this.queue.push(...seq);
     return seq;
@@ -212,6 +219,7 @@ export default class CubeEngine {
 
   reset() {
     this.queue = [];
+    this.pauseUntil = 0;
     if (this.current) {
       this.group.remove(this.current.pivot);
       this.current = null;
@@ -230,8 +238,22 @@ export default class CubeEngine {
       if (this.disposed) return;
       this.raf = requestAnimationFrame(loop);
 
+      // Honour a queued pause: keep rendering but don't start/advance moves.
+      if (this.pauseUntil && performance.now() < this.pauseUntil) {
+        this.controls.update();
+        this.renderer.render(this.scene, this.camera);
+        return;
+      }
+      this.pauseUntil = 0;
+
       if (!this.current && this.queue.length) {
-        this._beginMove(this.queue.shift());
+        const next = this.queue[0];
+        if (next && typeof next === 'object' && next.__pause) {
+          this.queue.shift();
+          this.pauseUntil = performance.now() + next.__pause;
+        } else {
+          this._beginMove(this.queue.shift());
+        }
       }
       if (this.current) {
         this._advanceMove();
@@ -245,9 +267,10 @@ export default class CubeEngine {
 
   _beginMove(move) {
     const { axis, layer, axisVec, angle } = this._resolve(move);
-    const selected = this.cubies.filter(
-      (c) => Math.round(c.userData.pos[axis]) === layer,
-    );
+    const selected =
+      layer === null
+        ? this.cubies
+        : this.cubies.filter((c) => Math.round(c.userData.pos[axis]) === layer);
 
     const pivot = new THREE.Group();
     this.group.add(pivot);

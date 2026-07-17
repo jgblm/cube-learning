@@ -11,7 +11,7 @@
  */
 
 /** Every face/slice this engine understands. */
-export const FACES = ['U', 'D', 'L', 'R', 'F', 'B', 'M', 'E', 'S'];
+export const FACES = ['U', 'D', 'L', 'R', 'F', 'B', 'M', 'E', 'S', 'x', 'y', 'z'];
 
 /** Faces used when generating scrambles (slices are excluded). */
 export const SCRAMBLE_FACES = ['U', 'D', 'L', 'R', 'F', 'B'];
@@ -34,6 +34,10 @@ export const FACE_DEF = {
   M: { axis: 'x', layer: 0, sign: 1 }, // matches L
   E: { axis: 'y', layer: 0, sign: -1 }, // matches D
   S: { axis: 'z', layer: 0, sign: 1 }, // matches F
+  // Whole-cube rotations: every cubie turns, so there is no single layer.
+  x: { axis: 'x', layer: null, sign: -1 },
+  y: { axis: 'y', layer: null, sign: -1 },
+  z: { axis: 'z', layer: null, sign: -1 },
 };
 
 /** Parse a move string into a normalised object. */

@@ -37,6 +37,7 @@ const CubeViewer = forwardRef(function CubeViewer(_props, ref) {
     play: (seq) => engineRef.current?.enqueue(seq),
     scramble: (n = 20) => engineRef.current?.scramble(n),
     reset: () => engineRef.current?.reset(),
+    pause: (ms) => engineRef.current?.pause(ms),
     setSpeed: (m) => engineRef.current?.setSpeed(m),
   }));
 
