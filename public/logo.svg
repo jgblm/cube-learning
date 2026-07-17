@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Rubik's Cube">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b2333"/>
+      <stop offset="1" stop-color="#0f1117"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="url(#bg)"/>
+  <g>
+    <polygon points="6.00,21.00 32.00,6.00 58.00,21.00 32.00,36.00" fill="#0d0f15"/>
+    <polygon points="7.21,21.00 14.67,16.70 22.12,21.00 14.67,25.30" fill="#eef2f8" stroke="#c7d0de" stroke-width="0.4"/>
+    <polygon points="15.88,26.00 23.33,21.70 30.79,26.00 23.33,30.30" fill="#eef2f8" stroke="#c7d0de" stroke-width="0.4"/>
+    <polygon points="24.55,31.00 32.00,26.70 39.45,31.00 32.00,35.30" fill="#eef2f8" stroke="#c7d0de" stroke-width="0.4"/>
+    <polygon points="15.88,16.00 23.33,11.70 30.79,16.00 23.33,20.30" fill="#eef2f8" stroke="#c7d0de" stroke-width="0.4"/>
+    <polygon points="24.55,21.00 32.00,16.70 39.45,21.00 32.00,25.30" fill="#eef2f8" stroke="#c7d0de" stroke-width="0.4"/>
+    <polygon points="33.21,26.00 40.67,21.70 48.12,26.00 40.67,30.30" fill="#eef2f8" stroke="#c7d0de" stroke-width="0.4"/>
+    <polygon points="24.55,11.00 32.00,6.70 39.45,11.00 32.00,15.30" fill="#eef2f8" stroke="#c7d0de" stroke-width="0.4"/>
+    <polygon points="33.21,16.00 40.67,11.70 48.12,16.00 40.67,20.30" fill="#eef2f8" stroke="#c7d0de" stroke-width="0.4"/>
+    <polygon points="41.88,21.00 49.33,16.70 56.79,21.00 49.33,25.30" fill="#eef2f8" stroke="#c7d0de" stroke-width="0.4"/>
+    <polygon points="6.00,21.00 32.00,36.00 32.00,62.00 6.00,47.00" fill="#0d0f15"/>
+    <polygon points="6.61,21.96 14.06,26.26 14.06,33.71 6.61,29.41" fill="#ff7a45" stroke="#e0592a" stroke-width="0.4"/>
+    <polygon points="6.61,30.62 14.06,34.92 14.06,42.38 6.61,38.08" fill="#ff7a45" stroke="#e0592a" stroke-width="0.4"/>
+    <polygon points="6.61,39.29 14.06,43.59 14.06,51.04 6.61,46.74" fill="#ff7a45" stroke="#e0592a" stroke-width="0.4"/>
+    <polygon points="15.27,26.96 22.73,31.26 22.73,38.71 15.27,34.41" fill="#ff7a45" stroke="#e0592a" stroke-width="0.4"/>
+    <polygon points="15.27,35.62 22.73,39.92 22.73,47.38 15.27,43.08" fill="#ff7a45" stroke="#e0592a" stroke-width="0.4"/>
+    <polygon points="15.27,44.29 22.73,48.59 22.73,56.04 15.27,51.74" fill="#ff7a45" stroke="#e0592a" stroke-width="0.4"/>
+    <polygon points="23.94,31.96 31.39,36.26 31.39,43.71 23.94,39.41" fill="#ff7a45" stroke="#e0592a" stroke-width="0.4"/>
+    <polygon points="23.94,40.62 31.39,44.92 31.39,52.38 23.94,48.08" fill="#ff7a45" stroke="#e0592a" stroke-width="0.4"/>
+    <polygon points="23.94,49.29 31.39,53.59 31.39,61.04 23.94,56.74" fill="#ff7a45" stroke="#e0592a" stroke-width="0.4"/>
+    <polygon points="32.00,36.00 58.00,21.00 58.00,47.00 32.00,62.00" fill="#0d0f15"/>
+    <polygon points="32.61,36.26 40.06,31.96 40.06,39.41 32.61,43.71" fill="#4f8cff" stroke="#2f6ae0" stroke-width="0.4"/>
+    <polygon points="32.61,44.92 40.06,40.62 40.06,48.08 32.61,52.38" fill="#4f8cff" stroke="#2f6ae0" stroke-width="0.4"/>
+    <polygon points="32.61,53.59 40.06,49.29 40.06,56.74 32.61,61.04" fill="#4f8cff" stroke="#2f6ae0" stroke-width="0.4"/>
+    <polygon points="41.27,31.26 48.73,26.96 48.73,34.41 41.27,38.71" fill="#4f8cff" stroke="#2f6ae0" stroke-width="0.4"/>
+    <polygon points="41.27,39.92 48.73,35.62 48.73,43.08 41.27,47.38" fill="#4f8cff" stroke="#2f6ae0" stroke-width="0.4"/>
+    <polygon points="41.27,48.59 48.73,44.29 48.73,51.74 41.27,56.04" fill="#4f8cff" stroke="#2f6ae0" stroke-width="0.4"/>
+    <polygon points="49.94,26.26 57.39,21.96 57.39,29.41 49.94,33.71" fill="#4f8cff" stroke="#2f6ae0" stroke-width="0.4"/>
+    <polygon points="49.94,34.92 57.39,30.62 57.39,38.08 49.94,42.38" fill="#4f8cff" stroke="#2f6ae0" stroke-width="0.4"/>
+    <polygon points="49.94,43.59 57.39,39.29 57.39,46.74 49.94,51.04" fill="#4f8cff" stroke="#2f6ae0" stroke-width="0.4"/>
+  </g>
+</svg>
