@@ -3,16 +3,16 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FACE_DEF, normalize, randomScramble, toSequence } from './moves.js';
 
 /**
- * Standard colour scheme (Western / "BOY"):
- *   U = white, D = yellow, F = green, B = blue, L = orange, R = red.
+ * Colour scheme: yellow Up, white Down, red Front, orange Back,
+ * blue Left, green Right. Yellow on top matches CFOP OLL/PLL conventions.
  */
 const COLORS = {
-  U: 0xf5f5f5, // white
-  D: 0xffd500, // yellow
-  F: 0x00b04f, // green
-  B: 0x0051ba, // blue
-  L: 0xff5800, // orange
-  R: 0xc41e3a, // red
+  U: 0xffd500, // yellow
+  D: 0xf5f5f5, // white
+  F: 0xc41e3a, // red
+  B: 0xff5800, // orange
+  L: 0x0051ba, // blue
+  R: 0x00b04f, // green
 };
 
 const CUBIE = 0.95; // body size
@@ -50,14 +50,6 @@ export default class CubeEngine {
         metalness: 0.05,
       });
     }
-    // Muted grey used to "dim" stickers the current formula never touches, so
-    // learners can focus on the pieces the algorithm actually moves.
-    this.grayMat = new THREE.MeshStandardMaterial({
-      color: 0x474d59,
-      roughness: 0.7,
-      metalness: 0.0,
-    });
-    this.highlightActive = false;
 
     this._initScene();
     this._buildCubies();
@@ -213,82 +205,42 @@ export default class CubeEngine {
     this.enqueue(input);
   }
 
+  /**
+   * Apply moves instantly with no animation — used to preset a "before" state
+   * (e.g. a formula's setup) so the user sees the case immediately instead of
+   * watching the scramble play out. Mirrors what `_advanceMove` does on
+   * completion: reparent through a pivot, bake the final rotation, and update
+   * logical coords.
+   */
+  applyInstant(input) {
+    const seq = toSequence(input);
+    for (const move of seq) {
+      const { axis, layer, axisVec, angle } = this._resolve(move);
+      const selected =
+        layer === null
+          ? this.cubies
+          : this.cubies.filter((c) => Math.round(c.userData.pos[axis]) === layer);
+      const pivot = new THREE.Group();
+      this.group.add(pivot);
+      selected.forEach((c) => pivot.attach(c));
+      pivot.setRotationFromAxisAngle(axisVec, angle);
+      selected.forEach((c) => {
+        this.group.attach(c);
+        c.userData.pos.applyAxisAngle(axisVec, angle).round();
+      });
+      this.group.remove(pivot);
+    }
+  }
+
   /** Hold the queue for `ms` so a setup state is visible before the next move. */
   pause(ms) {
     this.queue.push({ __pause: ms });
-  }
-
-  /**
-   * Dim every sticker the given sequence never touches, so the pieces the
-   * formula actually manipulates stand out. `seq` should be the full playback
-   * (setup + algorithm); the union of touched cubies is computed once.
-   */
-  highlight(seq) {
-    const touched = this._touchPositions(seq);
-    for (const c of this.cubies) {
-      const p = c.userData.pos;
-      const dim = !touched.some((t) => t.x === p.x && t.y === p.y && t.z === p.z);
-      c.traverse((o) => {
-        if (o.isMesh && o.userData.key) {
-          o.material = dim ? this.grayMat : this.stickerMats[o.userData.key];
-        }
-      });
-    }
-    this.highlightActive = true;
-  }
-
-  /** Remove the highlight and restore full colour. */
-  clearHighlight() {
-    for (const c of this.cubies) {
-      c.traverse((o) => {
-        if (o.isMesh && o.userData.key) o.material = this.stickerMats[o.userData.key];
-      });
-    }
-    this.highlightActive = false;
-  }
-
-  /**
-   * Simulate `seq` from solved and return the set of logical positions that
-   * get turned. Whole-cube rotations (x/y/z) reorient the tracking frame but do
-   * not count as "touched", since they move nothing relative to the cube.
-   */
-  _touchPositions(seq) {
-    const positions = [];
-    for (let x = -1; x <= 1; x += 1) {
-      for (let y = -1; y <= 1; y += 1) {
-        for (let z = -1; z <= 1; z += 1) {
-          if (x === 0 && y === 0 && z === 0) continue;
-          positions.push(new THREE.Vector3(x, y, z));
-        }
-      }
-    }
-    const touched = new Set();
-    const mark = (v) => touched.add(`${v.x},${v.y},${v.z}`);
-
-    for (const move of toSequence(seq)) {
-      const { axis, layer, axisVec, angle } = this._resolve(move);
-      if (layer === null) {
-        // Whole-cube rotation: coordinates change but nothing is "touched".
-        for (const p of positions) p.applyAxisAngle(axisVec, angle).round();
-        continue;
-      }
-      for (const p of positions) {
-        if (Math.round(p[axis]) === layer) mark(p);
-      }
-      for (const p of positions) p.applyAxisAngle(axisVec, angle).round();
-    }
-
-    return [...touched].map((s) => {
-      const [x, y, z] = s.split(',').map(Number);
-      return new THREE.Vector3(x, y, z);
-    });
   }
 
   scramble(n = 20) {
     this.queue = [];
     this.current = null;
     this.pauseUntil = 0;
-    this.clearHighlight();
     const seq = randomScramble(n);
     this.queue.push(...seq);
     return seq;
@@ -304,7 +256,6 @@ export default class CubeEngine {
     for (const c of this.cubies) this.group.remove(c);
     this.cubies = [];
     this._buildCubies();
-    this.highlightActive = false;
   }
 
   setSpeed(mult) {
@@ -390,7 +341,6 @@ export default class CubeEngine {
     this.bodyGeo.dispose();
     this.stickerGeo.dispose();
     this.bodyMat.dispose();
-    this.grayMat.dispose();
     Object.values(this.stickerMats).forEach((m) => m.dispose());
     if (this.renderer) {
       this.renderer.dispose();

@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import CubeViewer from './CubeViewer.jsx';
 import { OLL_2LOOK, PLL_COMMON } from '../cube/algorithms.js';
-import { toSequence } from '../cube/moves.js';
 import { useLang, tx } from '../i18n/LangContext.jsx';
 
 /** Small 3x3 top-face diagram; 1 = yellow sticker. */
@@ -67,15 +66,15 @@ export default function FormulaSheet() {
   const viewerRef = useRef(null);
   const [selectedId, setSelectedId] = useState(null);
 
-  /** Select a formula: reset cube, highlight touched pieces, play setup so the
-   *  cube shows the "before" state that this formula solves. */
+  /** Select a formula: reset cube, then instantly apply the setup so the cube
+   *  shows the "before" case this formula solves — no animation, so the user's
+   *  attention is reserved for the Play step. */
   const selectFormula = (entry) => {
     setSelectedId(entry.id);
     const viewer = viewerRef.current;
     if (!viewer) return;
     viewer.reset();
-    viewer.highlight(`${entry.setup} ${entry.algorithm}`);
-    viewer.play(toSequence(entry.setup));
+    viewer.applyInstant(entry.setup);
   };
 
   /** Play the solving algorithm. If the card wasn't selected yet, select it
@@ -95,8 +94,8 @@ export default function FormulaSheet() {
       <p className="section-sub">
         {tx(
           {
-            zh: '点击卡片选中公式，魔方将展示待复原状态；再点击「播放」观看复原过程。配色：上白下黄，前绿后蓝，左橙右红。',
-            en: 'Click a card to select it — the cube shows the case to solve. Then click "Play" to watch the solution. Scheme: white Up / yellow Down, green Front / blue Back, orange Left / red Right.',
+            zh: '点击卡片选中公式，魔方将展示待复原状态；再点击「播放」观看复原过程。配色：上黄下白，前红后橙，左蓝右绿。',
+            en: 'Click a card to select it — the cube shows the case to solve. Then click "Play" to watch the solution. Scheme: yellow Up / white Down, red Front / orange Back, blue Left / green Right.',
           },
           lang,
         )}

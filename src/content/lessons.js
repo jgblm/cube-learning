@@ -31,13 +31,13 @@ export const LEVELS = [
         id: 'colors',
         title: { zh: '配色与结构', en: 'Colours & Structure' },
         summary: {
-          zh: '本站点采用国际通用「BOY」配色：白上、黄下、绿前、蓝后、橙左、红右。',
-          en: 'This site uses the standard "BOY" colour scheme: white Up, yellow Down, green Front, blue Back, orange Left, red Right.',
+          zh: '本站点配色（BOY 相对面）：黄上、白下、红前、橙后、蓝左、绿右。',
+          en: 'Site colour scheme (BOY opposites): yellow Up, white Down, red Front, orange Back, blue Left, green Right.',
         },
         steps: [
-          { zh: '上 U = 白，下 D = 黄。', en: 'Up U = white, Down D = yellow.' },
-          { zh: '前 F = 绿，后 B = 蓝。', en: 'Front F = green, Back B = blue.' },
-          { zh: '左 L = 橙，右 R = 红。', en: 'Left L = orange, Right R = red.' },
+          { zh: '上 U = 黄，下 D = 白。', en: 'Up U = yellow, Down D = white.' },
+          { zh: '前 F = 红，后 B = 橙。', en: 'Front F = red, Back B = orange.' },
+          { zh: '左 L = 蓝，右 R = 绿。', en: 'Left L = blue, Right R = green.' },
           { zh: '记住「白对黄、红对橙、绿对蓝」能帮你快速判断块该去哪里。', en: 'Remember "white↔yellow, red↔orange, green↔blue" to quickly tell where a piece belongs.' },
         ],
       },
