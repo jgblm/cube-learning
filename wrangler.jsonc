@@ -16,7 +16,7 @@
     {
       "binding": "DB",
       "database_name": "cube-formulas",
-      "database_id": "${CUBE_FORMULAS_DB_ID:-00000000-0000-0000-0000-000000000000}"
+      "database_id": "d0c0560b-a764-40ca-ba46-b2585b3dafa7"
     }
   ]
 }

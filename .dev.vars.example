@@ -1,5 +1,0 @@
-# Example local env vars for Cloudflare D1.
-# Copy to `.dev.vars` (git-ignored) and set your local D1 database id.
-# In production, provide CUBE_FORMULAS_DB_ID as a real environment variable
-# when deploying (e.g. `CUBE_FORMULAS_DB_ID=<id> npm run deploy`).
-CUBE_FORMULAS_DB_ID=00000000-0000-0000-0000-000000000000
