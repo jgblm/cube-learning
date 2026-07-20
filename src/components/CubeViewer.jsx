@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import CubeEngine from '../cube/CubeEngine.js';
-import { useLang } from '../i18n/LangContext.jsx';
+import { useLang, tx } from '../i18n/LangContext.jsx';
 
 const MOVE_GROUPS = [
   ['U', "U'"],
@@ -31,6 +31,7 @@ const CubeViewer = forwardRef(function CubeViewer(_props, ref) {
   const containerRef = useRef(null);
   const engineRef = useRef(null);
   const [speed, setSpeedState] = useState(1);
+  const [controlsOpen, setControlsOpen] = useState(false);
   const { lang } = useLang();
 
   useEffect(() => {
@@ -79,39 +80,52 @@ const CubeViewer = forwardRef(function CubeViewer(_props, ref) {
         onKeyDown={onKey}
         aria-label="3D cube"
       />
-      <div className="cube-controls">
-        <div className="move-grid">
-          {MOVE_GROUPS.flat().map((m) => (
-            <button
-              key={m}
-              className="move-btn"
-              onClick={() => engineRef.current?.enqueue(m)}
-              title={m}
-            >
-              {m}
-            </button>
-          ))}
-        </div>
-        <div className="ctrl-row">
-          <button className="ctrl-btn accent" onClick={() => engineRef.current?.scramble(20)}>
-            打乱 Scramble
-          </button>
-          <button className="ctrl-btn" onClick={() => engineRef.current?.reset()}>
-            复位 Reset
-          </button>
-          <label className="speed">
-            {lang === 'zh' ? '速度' : 'Speed'}
-            <input
-              type="range"
-              min="0.5"
-              max="3"
-              step="0.1"
-              value={speed}
-              onChange={changeSpeed}
-            />
-            {speed.toFixed(1)}×
-          </label>
-        </div>
+      <div className="cube-controls-panel">
+        <button
+          type="button"
+          className={`controls-toggle ${controlsOpen ? 'open' : ''}`}
+          onClick={() => setControlsOpen((o) => !o)}
+          aria-expanded={controlsOpen}
+        >
+          <span className="chevron">{controlsOpen ? '▾' : '▸'}</span>
+          {tx({ zh: '操作键', en: 'Controls' }, lang)}
+        </button>
+        {controlsOpen && (
+          <div className="cube-controls">
+            <div className="move-grid">
+              {MOVE_GROUPS.flat().map((m) => (
+                <button
+                  key={m}
+                  className="move-btn"
+                  onClick={() => engineRef.current?.enqueue(m)}
+                  title={m}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+            <div className="ctrl-row">
+              <button className="ctrl-btn accent" onClick={() => engineRef.current?.scramble(20)}>
+                打乱 Scramble
+              </button>
+              <button className="ctrl-btn" onClick={() => engineRef.current?.reset()}>
+                复位 Reset
+              </button>
+              <label className="speed">
+                {lang === 'zh' ? '速度' : 'Speed'}
+                <input
+                  type="range"
+                  min="0.5"
+                  max="3"
+                  step="0.1"
+                  value={speed}
+                  onChange={changeSpeed}
+                />
+                {speed.toFixed(1)}×
+              </label>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

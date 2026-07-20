@@ -286,11 +286,40 @@ a {
   display: block;
 }
 
+.cube-controls-panel {
+  margin-top: 12px;
+}
+
+.controls-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.controls-toggle:hover {
+  border-color: var(--accent);
+  background: #20283a;
+}
+
+.controls-toggle .chevron {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
 .cube-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 14px;
+  margin-top: 12px;
   align-items: center;
 }
 
