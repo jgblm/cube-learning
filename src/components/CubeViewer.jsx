@@ -3,21 +3,21 @@ import CubeEngine from '../cube/CubeEngine.js';
 import { useLang } from '../i18n/LangContext.jsx';
 
 const MOVE_GROUPS = [
-  ['U', "U'", 'U2'],
-  ['D', "D'", 'D2'],
-  ['L', "L'", 'L2'],
-  ['R', "R'", 'R2'],
-  ['F', "F'", 'F2'],
-  ['B', "B'", 'B2'],
-  ['M', "M'", 'M2'],
-  ['E', "E'", 'E2'],
-  ['S', "S'", 'S2'],
-  ['Rw', "Rw'", 'Rw2'],
-  ['Lw', "Lw'", 'Lw2'],
-  ['Uw', "Uw'", 'Uw2'],
-  ['Dw', "Dw'", 'Dw2'],
-  ['Fw', "Fw'", 'Fw2'],
-  ['Bw', "Bw'", 'Bw2'],
+  ['U', "U'"],
+  ['D', "D'"],
+  ['L', "L'"],
+  ['R', "R'"],
+  ['F', "F'"],
+  ['B', "B'"],
+  ['M', "M'"],
+  ['E', "E'"],
+  ['S', "S'"],
+  ['Rw', "Rw'"],
+  ['Lw', "Lw'"],
+  ['Uw', "Uw'"],
+  ['Dw', "Dw'"],
+  ['Fw', "Fw'"],
+  ['Bw', "Bw'"],
 ];
 
 /**
