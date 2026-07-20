@@ -78,6 +78,9 @@ export default function Header() {
             <span className="label">{item[lang]}</span>
           </NavLink>
         ))}
+        <button className="bottom-nav-lang" onClick={toggle} title="切换语言 / Switch language">
+          <span className="label">{lang === 'zh' ? 'EN' : '中文'}</span>
+        </button>
       </nav>
     </>
   );
