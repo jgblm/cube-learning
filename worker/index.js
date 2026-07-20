@@ -8,13 +8,16 @@
  * non-API request, preserving client-side routing.
  *
  * Endpoints:
- *   GET    /api/formulas[?category=]   list formulas (optionally by category)
- *   GET    /api/formulas/:id           single formula
- *   GET    /api/categories             distinct categories
- *   POST   /api/formulas               create a formula
- *   PUT    /api/formulas/:id           update a formula
- *   DELETE /api/formulas/:id           delete a formula
- *   POST   /api/seed                   seed built-in data if the table is empty
+ *   POST   /api/auth/login             login (sets session cookie)
+ *   POST   /api/auth/logout            logout (clears session cookie)
+ *   GET    /api/auth/me                current user, or 401 if not logged in
+ *   GET    /api/formulas[?category=]   list formulas (requires login)
+ *   GET    /api/formulas/:id           single formula (requires login)
+ *   GET    /api/categories             distinct categories (requires login)
+ *   POST   /api/formulas               create a formula (requires login)
+ *   PUT    /api/formulas/:id           update a formula (requires login)
+ *   DELETE /api/formulas/:id           delete a formula (requires login)
+ *   POST   /api/seed                   seed built-in data if the table is empty (requires login)
  */
 
 import { OLL_2LOOK, PLL_COMMON } from '../src/cube/algorithms.js';
@@ -23,22 +26,35 @@ import { invertSequence, toSequence } from '../src/cube/moves.js';
 
 /* ------------------------------------------------------------------ schema */
 
-const SCHEMA =
+const SCHEMA_STATEMENTS = [
   'CREATE TABLE IF NOT EXISTS formulas (' +
-  'id TEXT PRIMARY KEY, ' +
-  'name_zh TEXT NOT NULL DEFAULT \'\', ' +
-  'name_en TEXT NOT NULL DEFAULT \'\', ' +
-  'category TEXT NOT NULL DEFAULT \'\', ' +
-  'initial_state TEXT NOT NULL DEFAULT \'\', ' +
-  'state_features_zh TEXT NOT NULL DEFAULT \'\', ' +
-  'state_features_en TEXT NOT NULL DEFAULT \'\', ' +
-  'algorithm TEXT NOT NULL DEFAULT \'\', ' +
-  'tags TEXT NOT NULL DEFAULT \'[]\', ' +
-  'creator TEXT NOT NULL DEFAULT \'system\', ' +
-  'description_zh TEXT NOT NULL DEFAULT \'\', ' +
-  'description_en TEXT NOT NULL DEFAULT \'\', ' +
-  'created_at INTEGER NOT NULL, ' +
-  'updated_at INTEGER NOT NULL)';
+    'id TEXT PRIMARY KEY, ' +
+    'name_zh TEXT NOT NULL DEFAULT \'\', ' +
+    'name_en TEXT NOT NULL DEFAULT \'\', ' +
+    'category TEXT NOT NULL DEFAULT \'\', ' +
+    'initial_state TEXT NOT NULL DEFAULT \'\', ' +
+    'state_features_zh TEXT NOT NULL DEFAULT \'\', ' +
+    'state_features_en TEXT NOT NULL DEFAULT \'\', ' +
+    'algorithm TEXT NOT NULL DEFAULT \'\', ' +
+    'tags TEXT NOT NULL DEFAULT \'[]\', ' +
+    'creator TEXT NOT NULL DEFAULT \'system\', ' +
+    'description_zh TEXT NOT NULL DEFAULT \'\', ' +
+    'description_en TEXT NOT NULL DEFAULT \'\', ' +
+    'created_at INTEGER NOT NULL, ' +
+    'updated_at INTEGER NOT NULL)',
+
+  'CREATE TABLE IF NOT EXISTS users (' +
+    'id TEXT PRIMARY KEY, ' +
+    'username TEXT NOT NULL UNIQUE, ' +
+    'password_hash TEXT NOT NULL, ' +
+    'created_at INTEGER NOT NULL, ' +
+    'updated_at INTEGER NOT NULL)',
+
+  'CREATE TABLE IF NOT EXISTS sessions (' +
+    'token_hash TEXT PRIMARY KEY, ' +
+    'user_id TEXT NOT NULL, ' +
+    'expires_at INTEGER NOT NULL)',
+];
 
 const COLS = [
   'id', 'name_zh', 'name_en', 'category', 'initial_state',
@@ -195,7 +211,9 @@ function buildSeed() {
 }
 
 async function ensureSchema(db) {
-  await db.prepare(SCHEMA).run();
+  for (const stmt of SCHEMA_STATEMENTS) {
+    await db.prepare(stmt).run();
+  }
 }
 
 async function seed(db) {
@@ -204,11 +222,154 @@ async function seed(db) {
   await db.batch(rows.map((r) => stmt.bind(...values(r))));
 }
 
+/* ------------------------------------------------------------- auth / users */
+
+const SESSION_TTL = 7 * 24 * 60 * 60; // seconds
+
+function bufToB64(buf) {
+  const bytes = new Uint8Array(buf);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+
+function b64ToBytes(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+function bufToHex(buf) {
+  const bytes = new Uint8Array(buf);
+  let hex = '';
+  for (let i = 0; i < bytes.length; i++) hex += bytes[i].toString(16).padStart(2, '0');
+  return hex;
+}
+
+function randomHex(bytes) {
+  const arr = crypto.getRandomValues(new Uint8Array(bytes));
+  return bufToHex(arr.buffer);
+}
+
+async function pbkdf2(password, saltBytes, iterations) {
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits'],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: saltBytes, iterations, hash: 'SHA-256' },
+    keyMaterial,
+    256,
+  );
+  return new Uint8Array(bits);
+}
+
+async function verifyPassword(password, stored) {
+  const parts = stored.split('$');
+  if (parts.length !== 4 || parts[0] !== 'pbkdf2') return false;
+  const iterations = Number(parts[1]);
+  const salt = b64ToBytes(parts[2]);
+  const expected = b64ToBytes(parts[3]);
+  const actual = await pbkdf2(password, salt, iterations);
+  if (actual.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < actual.length; i++) diff |= actual[i] ^ expected[i];
+  return diff === 0;
+}
+
+async function createSession(db, userId) {
+  const token = randomHex(32);
+  const tokenHash = bufToHex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token)));
+  const expiresAt = Date.now() + SESSION_TTL * 1000;
+  await db
+    .prepare('INSERT OR REPLACE INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)')
+    .bind(tokenHash, userId, expiresAt)
+    .run();
+  return { token, expiresAt };
+}
+
+async function getSessionUser(request, db) {
+  const cookie = request.headers.get('Cookie') || '';
+  const match = cookie.match(/(?:^|;\s*)session=([^;]+)/);
+  if (!match) return null;
+  const token = decodeURIComponent(match[1]);
+  const tokenHash = bufToHex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token)));
+  const row = await db
+    .prepare(
+      'SELECT s.expires_at, u.id, u.username FROM sessions s ' +
+        'JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?',
+    )
+    .bind(tokenHash)
+    .first();
+  if (!row) return null;
+  if (row.expires_at < Date.now()) return null;
+  return { id: row.id, username: row.username };
+}
+
+async function destroySession(db, request) {
+  const cookie = request.headers.get('Cookie') || '';
+  const match = cookie.match(/(?:^|;\s*)session=([^;]+)/);
+  if (!match) return;
+  const token = decodeURIComponent(match[1]);
+  const tokenHash = bufToHex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token)));
+  await db.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(tokenHash).run();
+}
+
+function sessionCookie(token, expiresAt, secure) {
+  const maxAge = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+  let c = `session=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${maxAge}`;
+  if (secure) c += '; Secure';
+  return c;
+}
+
+function withSession(response, token, expiresAt, secure) {
+  response.headers.append('Set-Cookie', sessionCookie(token, expiresAt, secure));
+  return response;
+}
+
 /* ------------------------------------------------------------------- routes */
 
 async function handleApi(request, url, db) {
   const method = request.method;
   const { pathname } = url;
+  const secure = url.protocol === 'https:';
+
+  /* ----- auth ----- */
+  if (pathname === '/api/auth/login' && method === 'POST') {
+    const body = await request.json().catch(() => ({}));
+    const username = String(body.username || '').trim();
+    const password = String(body.password || '');
+    const user = await db.prepare('SELECT * FROM users WHERE username = ?').bind(username).first();
+    if (!user || !(await verifyPassword(password, user.password_hash))) {
+      return Response.json({ error: '用户名或密码错误' }, { status: 401 });
+    }
+    const { token, expiresAt } = await createSession(db, user.id);
+    const res = Response.json({ user: { id: user.id, username: user.username } });
+    return withSession(res, token, expiresAt, secure);
+  }
+
+  if (pathname === '/api/auth/logout' && method === 'POST') {
+    await destroySession(db, request);
+    const res = Response.json({ ok: true });
+    res.headers.append('Set-Cookie', sessionCookie('', 0, secure));
+    return res;
+  }
+
+  if (pathname === '/api/auth/me' && method === 'GET') {
+    const user = await getSessionUser(request, db);
+    if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 });
+    return Response.json({ user });
+  }
+
+  /* ----- formula library (requires login) ----- */
+  const currentUser = await getSessionUser(request, db);
+  if (!currentUser) {
+    return Response.json({ error: 'unauthorized' }, { status: 401 });
+  }
 
   if (pathname === '/api/categories' && method === 'GET') {
     const { results } = await db
@@ -250,7 +411,7 @@ async function handleApi(request, url, db) {
       if (exists) {
         return Response.json({ error: 'id already exists' }, { status: 409 });
       }
-      const row = inputToRow({ ...body, id }, Date.now());
+      const row = inputToRow({ ...body, id, creator: currentUser.username }, Date.now());
       await db.prepare(INSERT_SQL).bind(...values(row)).run();
       const created = await db.prepare('SELECT * FROM formulas WHERE id = ?').bind(id).first();
       return Response.json({ formula: rowToFormula(created) }, { status: 201 });

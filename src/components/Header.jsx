@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useLang } from '../i18n/LangContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const ICONS = {
   home: (
@@ -49,6 +50,32 @@ const NAV = [
 
 export default function Header() {
   const { lang, toggle } = useLang();
+  const { user, logout } = useAuth();
+
+  const authDesktop = user ? (
+    <div className="user-area">
+      <span className="user-chip" title={user.username}>
+        {user.username}
+      </span>
+      <button className="logout-btn" onClick={logout}>
+        {lang === 'zh' ? '退出' : 'Logout'}
+      </button>
+    </div>
+  ) : (
+    <NavLink to="/library" className="login-btn">
+      {lang === 'zh' ? '登录' : 'Login'}
+    </NavLink>
+  );
+
+  const authMobile = user ? (
+    <button className="bottom-nav-logout" onClick={logout} title="退出 / Logout">
+      <span className="label">{lang === 'zh' ? '退出' : 'Logout'}</span>
+    </button>
+  ) : (
+    <NavLink to="/library" className="bottom-nav-login" title="登录 / Login">
+      <span className="label">{lang === 'zh' ? '登录' : 'Login'}</span>
+    </NavLink>
+  );
 
   return (
     <>
@@ -69,6 +96,7 @@ export default function Header() {
             </NavLink>
           ))}
         </nav>
+        {authDesktop}
         <button className="lang-toggle" onClick={toggle} title="切换语言 / Switch language">
           {lang === 'zh' ? 'EN' : '中文'}
         </button>
@@ -86,6 +114,7 @@ export default function Header() {
             <span className="label">{item[lang]}</span>
           </NavLink>
         ))}
+        {authMobile}
         <button className="bottom-nav-lang" onClick={toggle} title="切换语言 / Switch language">
           <span className="label">{lang === 'zh' ? 'EN' : '中文'}</span>
         </button>

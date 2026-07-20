@@ -392,6 +392,109 @@ a {
   accent-color: var(--accent);
 }
 
+/* ---------- Auth (login / register) ---------- */
+.auth-card {
+  max-width: 420px;
+  margin: 32px auto;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.auth-submit {
+  margin-top: 4px;
+  justify-content: center;
+}
+
+/* ---------- Header user / login ---------- */
+.user-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-chip {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logout-btn,
+.login-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.login-btn {
+  text-decoration: none;
+}
+
+.logout-btn:hover,
+.login-btn:hover {
+  border-color: var(--accent);
+  background: #20283a;
+}
+
+.bottom-nav-login,
+.bottom-nav-logout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.bottom-nav-login.active,
+.bottom-nav-login:hover,
+.bottom-nav-logout:hover {
+  color: var(--accent);
+}
+
 /* ---------- Lessons ---------- */
 .lesson-layout {
   display: grid;
@@ -715,6 +818,27 @@ a {
 
 .lib-head .section-sub {
   margin-bottom: 0;
+}
+
+.lib-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lib-user {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .lib-layout {

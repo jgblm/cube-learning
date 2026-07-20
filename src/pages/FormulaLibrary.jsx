@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import CubeViewer from '../components/CubeViewer.jsx';
 import { formulasApi } from '../lib/api.js';
 import { useLang, tx } from '../i18n/LangContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const EMPTY_FORM = {
   id: '',
@@ -104,7 +105,7 @@ function FormulaForm({ initial, lang, onCancel, onSubmit, saving }) {
           </label>
           <label className="form-field">
             <span>{tx({ zh: '创建者', en: 'Creator' }, lang)}</span>
-            <input value={form.creator} onChange={set('creator')} />
+            <input value={form.creator} readOnly onChange={set('creator')} />
           </label>
           <label className="form-field form-field-wide">
             <span>{tx({ zh: '描述（中）', en: 'Description (zh)' }, lang)}</span>
@@ -128,21 +129,77 @@ function FormulaForm({ initial, lang, onCancel, onSubmit, saving }) {
   );
 }
 
+/** Login card shown when the user is not authenticated. */
+function AuthScreen({ lang, onLogin }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setBusy(true);
+    try {
+      await onLogin({ username, password });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="auth-card">
+      <h1 className="section-title">{tx({ zh: '公式库', en: 'Formula Library' }, lang)}</h1>
+      <p className="section-sub">
+        {tx(
+          { zh: '请登录后查看与编辑公式库。', en: 'Please sign in to view and edit the formula library.' },
+          lang,
+        )}
+      </p>
+      <form className="auth-form" onSubmit={submit}>
+        <input
+          type="text"
+          autoComplete="username"
+          placeholder={tx({ zh: '用户名', en: 'Username' }, lang)}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+        <input
+          type="password"
+          autoComplete="current-password"
+          placeholder={tx({ zh: '密码', en: 'Password' }, lang)}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        {error && <div className="note error">{error}</div>}
+        <button className="ctrl-btn primary auth-submit" type="submit" disabled={busy}>
+          {busy
+            ? tx({ zh: '处理中…', en: 'Please wait…' }, lang)
+            : tx({ zh: '登录', en: 'Login' }, lang)}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export default function FormulaLibrary() {
   const { lang } = useLang();
+  const { user, loading, login, logout } = useAuth();
   const viewerRef = useRef(null);
 
   const [formulas, setFormulas] = useState([]);
   const [categories, setCategories] = useState([]);
   const [activeCat, setActiveCat] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState(null);
   const [formOpen, setFormOpen] = useState(null); // null | 'new' | formula
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    setLoadingData(true);
     setError(null);
     try {
       const [fRes, cRes] = await Promise.all([
@@ -162,13 +219,14 @@ export default function FormulaLibrary() {
     } catch (e) {
       setError(e.message);
     } finally {
-      setLoading(false);
+      setLoadingData(false);
     }
   }, [activeCat]);
 
+  // Load formulas only once the user is authenticated.
   useEffect(() => {
-    load();
-  }, [load]);
+    if (user) load();
+  }, [user, load]);
 
   const selectFormula = (f) => {
     setSelectedId(f.id);
@@ -187,7 +245,7 @@ export default function FormulaLibrary() {
     else viewer.play(f.algorithm);
   };
 
-  const openNew = () => setFormOpen({ ...EMPTY_FORM });
+  const openNew = () => setFormOpen({ ...EMPTY_FORM, creator: user?.username || 'system' });
   const openEdit = (f) =>
     setFormOpen({
       id: f.id,
@@ -218,7 +276,7 @@ export default function FormulaLibrary() {
           .split(',')
           .map((t) => t.trim())
           .filter(Boolean),
-        creator: form.creator.trim() || 'system',
+        creator: form.creator.trim() || user?.username || 'system',
         description: { zh: form.description_zh.trim(), en: form.description_en.trim() },
       };
       const isEdit = formOpen && formOpen.id && formulas.some((f) => f.id === formOpen.id);
@@ -254,6 +312,14 @@ export default function FormulaLibrary() {
     ? categories
     : Array.from(new Set(formulas.map((f) => f.category))).filter(Boolean);
 
+  if (loading) {
+    return <p className="section-sub">{tx({ zh: '加载中…', en: 'Loading…' }, lang)}</p>;
+  }
+
+  if (!user) {
+    return <AuthScreen lang={lang} onLogin={login} />;
+  }
+
   return (
     <div>
       <div className="lib-head">
@@ -269,9 +335,15 @@ export default function FormulaLibrary() {
             )}
           </p>
         </div>
-        <button className="ctrl-btn primary" onClick={openNew}>
-          {tx({ zh: '新增公式', en: 'New Formula' }, lang)}
-        </button>
+        <div className="lib-head-actions">
+          <span className="lib-user">{user.username}</span>
+          <button className="ghost-btn" onClick={logout}>
+            {tx({ zh: '退出', en: 'Logout' }, lang)}
+          </button>
+          <button className="ctrl-btn primary" onClick={openNew}>
+            {tx({ zh: '新增公式', en: 'New Formula' }, lang)}
+          </button>
+        </div>
       </div>
 
       {error && <div className="note error">{error}</div>}
@@ -298,7 +370,7 @@ export default function FormulaLibrary() {
         </aside>
 
         <section className="lib-list">
-          {loading ? (
+          {loadingData ? (
             <p className="section-sub">{tx({ zh: '加载中…', en: 'Loading…' }, lang)}</p>
           ) : filtered.length === 0 ? (
             <p className="section-sub">{tx({ zh: '暂无公式', en: 'No formulas yet.' }, lang)}</p>

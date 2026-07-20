@@ -7,12 +7,15 @@ const BASE = '/api';
 
 async function req(path, options) {
   const res = await fetch(BASE + path, {
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     ...options,
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || `HTTP ${res.status}`);
+    const err = new Error(data.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
   }
   return res.json();
 }
@@ -40,4 +43,19 @@ export const formulasApi = {
 
   /** Seed built-in data if the table is empty. */
   seed: () => req('/seed', { method: 'POST' }),
+};
+
+export const authApi = {
+  /** Log in with username + password. */
+  login: ({ username, password }) =>
+    req('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+
+  /** Log out (clears the session cookie). */
+  logout: () => req('/auth/logout', { method: 'POST' }),
+
+  /** Fetch the current user, or throw with status 401 if not logged in. */
+  me: () => req('/auth/me'),
 };
