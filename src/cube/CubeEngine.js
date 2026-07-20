@@ -185,7 +185,7 @@ export default class CubeEngine {
 
   /** Resolve a move string into the data needed to animate it. */
   _resolve(move) {
-    const { face, prime, dbl } = normalize(move);
+    const { face, wide, prime, dbl } = normalize(move);
     const def = FACE_DEF[face];
     const sign = def.sign * (prime ? -1 : 1);
     const angle = sign * (dbl ? Math.PI : Math.PI / 2);
@@ -194,7 +194,24 @@ export default class CubeEngine {
       def.axis === 'y' ? 1 : 0,
       def.axis === 'z' ? 1 : 0,
     );
-    return { axis: def.axis, layer: def.layer, axisVec, angle };
+    return { axis: def.axis, layer: def.layer, wide, axisVec, angle };
+  }
+
+  /**
+   * Pick the cubies a move acts on. A wide move (Rw, Lw, …) turns the
+   * named outer layer plus the adjacent middle slice (layer 0), so it selects
+   * both coordinates on that side; a whole-cube rotation (x/y/z, layer null)
+   * selects everything; a normal face/slice turn selects a single layer.
+   */
+  _selectCubies(axis, layer, wide) {
+    if (layer === null) return this.cubies;
+    if (wide) {
+      return this.cubies.filter((c) => {
+        const p = Math.round(c.userData.pos[axis]);
+        return p === layer || p === 0;
+      });
+    }
+    return this.cubies.filter((c) => Math.round(c.userData.pos[axis]) === layer);
   }
 
   /** Queue one move (string) or many (array / space-separated string). */
@@ -222,11 +239,8 @@ export default class CubeEngine {
   applyInstant(input) {
     const seq = toSequence(input);
     for (const move of seq) {
-      const { axis, layer, axisVec, angle } = this._resolve(move);
-      const selected =
-        layer === null
-          ? this.cubies
-          : this.cubies.filter((c) => Math.round(c.userData.pos[axis]) === layer);
+      const { axis, layer, wide, axisVec, angle } = this._resolve(move);
+      const selected = this._selectCubies(axis, layer, wide);
       const pivot = new THREE.Group();
       this.group.add(pivot);
       selected.forEach((c) => pivot.attach(c));
@@ -360,11 +374,8 @@ export default class CubeEngine {
   }
 
   _beginMove(move) {
-    const { axis, layer, axisVec, angle } = this._resolve(move);
-    const selected =
-      layer === null
-        ? this.cubies
-        : this.cubies.filter((c) => Math.round(c.userData.pos[axis]) === layer);
+    const { axis, layer, wide, axisVec, angle } = this._resolve(move);
+    const selected = this._selectCubies(axis, layer, wide);
 
     const pivot = new THREE.Group();
     this.group.add(pivot);

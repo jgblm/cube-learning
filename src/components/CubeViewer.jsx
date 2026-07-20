@@ -9,6 +9,15 @@ const MOVE_GROUPS = [
   ['R', "R'", 'R2'],
   ['F', "F'", 'F2'],
   ['B', "B'", 'B2'],
+  ['M', "M'", 'M2'],
+  ['E', "E'", 'E2'],
+  ['S', "S'", 'S2'],
+  ['Rw', "Rw'", 'Rw2'],
+  ['Lw', "Lw'", 'Lw2'],
+  ['Uw', "Uw'", 'Uw2'],
+  ['Dw', "Dw'", 'Dw2'],
+  ['Fw', "Fw'", 'Fw2'],
+  ['Bw', "Bw'", 'Bw2'],
 ];
 
 /**
@@ -71,34 +80,38 @@ const CubeViewer = forwardRef(function CubeViewer(_props, ref) {
         aria-label="3D cube"
       />
       <div className="cube-controls">
-        {MOVE_GROUPS.flat().map((m) => (
-          <button
-            key={m}
-            className="move-btn"
-            onClick={() => engineRef.current?.enqueue(m)}
-            title={m}
-          >
-            {m}
+        <div className="move-grid">
+          {MOVE_GROUPS.flat().map((m) => (
+            <button
+              key={m}
+              className="move-btn"
+              onClick={() => engineRef.current?.enqueue(m)}
+              title={m}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+        <div className="ctrl-row">
+          <button className="ctrl-btn accent" onClick={() => engineRef.current?.scramble(20)}>
+            打乱 Scramble
           </button>
-        ))}
-        <button className="ctrl-btn accent" onClick={() => engineRef.current?.scramble(20)}>
-          打乱 Scramble
-        </button>
-        <button className="ctrl-btn" onClick={() => engineRef.current?.reset()}>
-          复位 Reset
-        </button>
-        <label className="speed">
-          {lang === 'zh' ? '速度' : 'Speed'}
-          <input
-            type="range"
-            min="0.5"
-            max="3"
-            step="0.1"
-            value={speed}
-            onChange={changeSpeed}
-          />
-          {speed.toFixed(1)}×
-        </label>
+          <button className="ctrl-btn" onClick={() => engineRef.current?.reset()}>
+            复位 Reset
+          </button>
+          <label className="speed">
+            {lang === 'zh' ? '速度' : 'Speed'}
+            <input
+              type="range"
+              min="0.5"
+              max="3"
+              step="0.1"
+              value={speed}
+              onChange={changeSpeed}
+            />
+            {speed.toFixed(1)}×
+          </label>
+        </div>
       </div>
     </div>
   );

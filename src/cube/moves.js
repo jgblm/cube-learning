@@ -4,7 +4,7 @@
  * Supported notation: the six faces U, D, L, R, F, B, the three slices
  * M (between L/R), E (between U/D) and S (between F/B), each optionally
  * followed by "'" (prime / counter-clockwise) or "2" (double turn).
- * Examples: "R", "U'", "F2", "L", "M2".
+ * Examples: "R", "U'", "F2", "L", "M2", "Rw'", "Uw2".
  *
  * These helpers are pure string manipulation so they can be used anywhere
  * without pulling in three.js.
@@ -48,23 +48,25 @@ export function normalize(move) {
     throw new Error(`Invalid move face: "${m}"`);
   }
   const mod = m.slice(1);
+  const wide = /w/i.test(mod);
   return {
     face,
+    wide,
     prime: mod.includes("'"),
     dbl: mod.includes('2'),
   };
 }
 
 /** Serialise a normalised move back to a string. */
-export function toString({ face, prime, dbl }) {
-  return face + (dbl ? '2' : prime ? "'" : '');
+export function toString({ face, wide, prime, dbl }) {
+  return face + (wide ? 'w' : '') + (dbl ? '2' : prime ? "'" : '');
 }
 
 /** Invert a single move (U -> U', U2 -> U2, U' -> U). */
 export function invert(move) {
   const n = normalize(move);
   if (n.dbl) return toString(n);
-  return toString({ face: n.face, prime: !n.prime, dbl: false });
+  return toString({ face: n.face, wide: n.wide, prime: !n.prime, dbl: false });
 }
 
 /** Invert a whole sequence, reversing the order (like undoing a stack). */
