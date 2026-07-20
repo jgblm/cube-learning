@@ -2,6 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "cube-learning",
   "compatibility_date": "2026-07-17",
+  "main": "worker/index.js",
   "observability": {
     "enabled": true
   },
@@ -10,5 +11,12 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cube-formulas",
+      "database_id": "${CUBE_FORMULAS_DB_ID:-00000000-0000-0000-0000-000000000000}"
+    }
   ]
 }

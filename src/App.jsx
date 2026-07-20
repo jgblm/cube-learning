@@ -4,6 +4,7 @@ import Home from './pages/Home.jsx';
 import LessonView from './components/LessonView.jsx';
 import FormulaSheet from './components/FormulaSheet.jsx';
 import SolverDemo from './components/SolverDemo.jsx';
+import FormulaLibrary from './pages/FormulaLibrary.jsx';
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/learn" element={<LessonView />} />
           <Route path="/formulas" element={<FormulaSheet />} />
+          <Route path="/library" element={<FormulaLibrary />} />
           <Route path="/solver" element={<SolverDemo />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

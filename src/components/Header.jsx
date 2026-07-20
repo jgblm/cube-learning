@@ -30,6 +30,13 @@ const ICONS = {
       <path d="M18 14l1 2.5L21.5 17 19 18l-1 2.5L17 18l-2.5-1L17 15.5z" />
     </svg>
   ),
+  library: (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 5.5A2 2 0 0 1 6 4h4a2 2 0 0 1 2 2v12.5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2z" />
+      <path d="M10 6.5h4a2 2 0 0 1 2 2v10.5a2 2 0 0 0-2-2h-4" />
+      <path d="M16 8.5h2a2 2 0 0 1 2 2v8.5" />
+    </svg>
+  ),
 };
 
 const NAV = [
@@ -37,6 +44,7 @@ const NAV = [
   { to: '/learn', key: 'learn', icon: 'learn', zh: '课程', en: 'Lessons' },
   { to: '/formulas', key: 'formulas', icon: 'formulas', zh: '公式', en: 'Formulas' },
   { to: '/solver', key: 'solver', icon: 'solver', zh: '求解', en: 'Solver' },
+  { to: '/library', key: 'library', icon: 'library', zh: '公式库', en: 'Library' },
 ];
 
 export default function Header() {
