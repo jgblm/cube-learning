@@ -34,7 +34,6 @@ const SCHEMA_STATEMENTS = [
     'state_features_en TEXT NOT NULL DEFAULT \'\', ' +
     'algorithm TEXT NOT NULL DEFAULT \'\', ' +
     'tags TEXT NOT NULL DEFAULT \'[]\', ' +
-    'state_data TEXT DEFAULT NULL, ' +
     'creator TEXT NOT NULL DEFAULT \'system\', ' +
     'description_zh TEXT NOT NULL DEFAULT \'\', ' +
     'description_en TEXT NOT NULL DEFAULT \'\', ' +
@@ -57,7 +56,6 @@ const SCHEMA_STATEMENTS = [
 const COLS = [
   'id', 'name_zh', 'name_en', 'category', 'initial_state',
   'state_features_zh', 'state_features_en', 'algorithm', 'tags',
-  'state_data',
   'creator', 'description_zh', 'description_en', 'created_at', 'updated_at',
 ];
 
@@ -85,7 +83,6 @@ function rowToFormula(row) {
     state_features: { zh: row.state_features_zh, en: row.state_features_en },
     algorithm: row.algorithm,
     tags: parseTags(row.tags),
-    state_data: row.state_data ? JSON.parse(row.state_data) : null,
     creator: row.creator,
     description: { zh: row.description_zh, en: row.description_en },
     created_at: row.created_at,
@@ -105,7 +102,6 @@ function inputToRow(input, now) {
     state_features_en: input.state_features?.en ?? '',
     algorithm: input.algorithm ?? '',
     tags: JSON.stringify(tags),
-    state_data: input.state_data ? JSON.stringify(input.state_data) : null,
     creator: input.creator ?? 'system',
     description_zh: input.description?.zh ?? '',
     description_en: input.description?.en ?? '',
@@ -130,7 +126,6 @@ function mergeRow(existing, body) {
     state_features_en: body.state_features?.en ?? existing.state_features_en,
     algorithm: body.algorithm ?? existing.algorithm,
     tags,
-    state_data: body.state_data !== undefined ? JSON.stringify(body.state_data) : existing.state_data,
     creator: body.creator ?? existing.creator,
     description_zh: body.description?.zh ?? existing.description_zh,
     description_en: body.description?.en ?? existing.description_en,
@@ -162,7 +157,6 @@ function buildSeed() {
             initial_state: entry.setup,
             algorithm: alg,
             tags: ['F2L', `case_${entry.case}`, entry.subgroup, entry.dataFl],
-            state_data: entry.coloredPositions,
             creator: 'system',
           },
           now,
@@ -177,12 +171,6 @@ function buildSeed() {
 async function ensureSchema(db) {
   for (const stmt of SCHEMA_STATEMENTS) {
     await db.prepare(stmt).run();
-  }
-  // Migrate: add state_data column if missing (existing DBs)
-  try {
-    await db.prepare("ALTER TABLE formulas ADD COLUMN state_data TEXT DEFAULT NULL").run();
-  } catch {
-    // column already exists — ignore
   }
 }
 
