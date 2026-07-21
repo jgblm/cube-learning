@@ -44,9 +44,6 @@ function FormulaCard({ formula, lang, isSelected, onSelect, onPlay, onEdit, onDe
       <code>{formula.algorithm}</code>
       {tx(formula.description, lang) && <p className="formula-desc">{tx(formula.description, lang)}</p>}
       <div className="card-actions" onClick={(e) => e.stopPropagation()}>
-        <button className="play-btn" onClick={() => onPlay(formula)}>
-          {tx({ zh: '播放', en: 'Play' }, lang)}
-        </button>
         <button className="ghost-btn" onClick={() => onEdit(formula)}>
           {tx({ zh: '编辑', en: 'Edit' }, lang)}
         </button>
@@ -359,7 +356,25 @@ export default function FormulaLibrary() {
 
       {error && <div className="note error">{error}</div>}
 
-      <CubeViewer ref={viewerRef} />
+      <CubeViewer ref={viewerRef}>
+        {selectedId && (() => {
+          const f = formulas.find((f) => f.id === selectedId);
+          return f && (
+            <>
+              <code className="cube-label-overlay">{f.algorithm}</code>
+              <button
+                className="cube-play-overlay"
+                onClick={() => playFormula(f)}
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                  <polygon points="3,1 12,7 3,13" />
+                </svg>
+                {tx({ zh: '播放', en: 'Play' }, lang)}
+              </button>
+            </>
+          );
+        })()}
+      </CubeViewer>
 
       <div className="lib-layout">
         <aside className="lib-sidebar">

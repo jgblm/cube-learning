@@ -241,6 +241,10 @@ a {
 }
 
 /* ---------- Cube viewer ---------- */
+.cube-wrapper {
+  position: relative;
+}
+
 .cube-stage {
   position: relative;
   width: 100%;
@@ -599,6 +603,29 @@ a {
   gap: 14px;
   padding: 14px 0;
   border-top: 1px solid var(--border);
+  transition: background 0.12s;
+}
+
+.step-has-alg {
+  cursor: pointer;
+}
+
+.step-has-alg:hover {
+  background: rgba(36, 48, 73, 0.3);
+  border-radius: 8px;
+  padding-left: 6px;
+  padding-right: 6px;
+  margin-left: -6px;
+  margin-right: -6px;
+}
+
+.step-active {
+  background: rgba(36, 48, 73, 0.45);
+  border-radius: 8px;
+  padding-left: 6px;
+  padding-right: 6px;
+  margin-left: -6px;
+  margin-right: -6px;
 }
 
 .step:first-of-type {
@@ -656,6 +683,57 @@ a {
 
 .play-btn:hover {
   border-color: var(--accent);
+}
+
+.cube-play-overlay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  border: 1px solid rgba(79, 140, 255, 0.6);
+  background: rgba(28, 39, 66, 0.92);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cube-play-overlay:hover {
+  background: rgba(36, 48, 73, 0.95);
+  border-color: var(--accent);
+}
+
+.cube-play-overlay:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: var(--border);
+}
+
+.cube-label-overlay {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  background: rgba(14, 16, 24, 0.9);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--good);
+  backdrop-filter: blur(6px);
+  max-width: calc(100% - 100px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .lesson-aside {

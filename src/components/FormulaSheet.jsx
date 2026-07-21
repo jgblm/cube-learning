@@ -48,15 +48,6 @@ function Card({ entry, onPlay, lang, isSelected, onSelect }) {
       </div>
       {entry.pattern && <FaceSVG pattern={entry.pattern} />}
       <code>{entry.algorithm}</code>
-      <button
-        className="play-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          onPlay(entry);
-        }}
-      >
-        {tx({ zh: '播放', en: 'Play' }, lang)}
-      </button>
     </div>
   );
 }
@@ -111,7 +102,25 @@ export default function FormulaSheet() {
         )}
       </div>
 
-      <CubeViewer ref={viewerRef} />
+      <CubeViewer ref={viewerRef}>
+        {selectedId && (() => {
+          const entry = [...OLL_2LOOK, ...PLL_COMMON].find((e) => e.id === selectedId);
+          return entry && (
+            <>
+              <code className="cube-label-overlay">{entry.algorithm}</code>
+              <button
+                className="cube-play-overlay"
+                onClick={() => playAlgorithm(entry)}
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                  <polygon points="3,1 12,7 3,13" />
+                </svg>
+                {tx({ zh: '播放', en: 'Play' }, lang)}
+              </button>
+            </>
+          );
+        })()}
+      </CubeViewer>
 
       <h2 className="section-title" style={{ fontSize: 18, marginTop: 22 }}>
         {tx({ zh: '两步 OLL（顶面翻黄）', en: 'Two-Look OLL (orient top)' }, lang)}

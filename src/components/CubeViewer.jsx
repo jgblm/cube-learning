@@ -27,7 +27,7 @@ const MOVE_GROUPS = [
  * Drag to orbit the camera, scroll to zoom, or use the on-screen buttons /
  * keyboard (letter = clockwise, Shift+letter = prime).
  */
-const CubeViewer = forwardRef(function CubeViewer(_props, ref) {
+const CubeViewer = forwardRef(function CubeViewer({ children }, ref) {
   const containerRef = useRef(null);
   const engineRef = useRef(null);
   const [speed, setSpeedState] = useState(1);
@@ -69,7 +69,7 @@ const CubeViewer = forwardRef(function CubeViewer(_props, ref) {
   };
 
   return (
-    <div>
+    <div className="cube-wrapper">
       <div
         className="cube-stage"
         ref={containerRef}
@@ -77,6 +77,7 @@ const CubeViewer = forwardRef(function CubeViewer(_props, ref) {
         onKeyDown={onKey}
         aria-label="3D cube"
       />
+      {children}
       <div className="cube-controls-panel">
         <button
           type="button"

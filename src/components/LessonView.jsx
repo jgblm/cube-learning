@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import CubeViewer from './CubeViewer.jsx';
 import { LEVELS } from '../content/lessons.js';
 import { invertSequence, toSequence } from '../cube/moves.js';
@@ -8,6 +8,11 @@ export default function LessonView() {
   const { lang } = useLang();
   const viewerRef = useRef(null);
   const [selectedId, setSelectedId] = useState(LEVELS[0].lessons[0].id);
+  const [activeStepIdx, setActiveStepIdx] = useState(0);
+
+  useEffect(() => {
+    setActiveStepIdx(0);
+  }, [selectedId]);
 
   const selected = LEVELS.flatMap((l) => l.lessons).find((ls) => ls.id === selectedId);
 
@@ -22,6 +27,8 @@ export default function LessonView() {
     viewer.pause(900);
     viewer.play(algorithm);
   };
+
+  const activeStep = selected?.steps?.[activeStepIdx];
 
   return (
     <div>
@@ -57,22 +64,38 @@ export default function LessonView() {
         </aside>
 
         <section className="lesson-panel">
-          <CubeViewer ref={viewerRef} />
+          <CubeViewer ref={viewerRef}>
+            {activeStep?.algorithm && (
+              <>
+                <code className="cube-label-overlay">{activeStep.algorithm}</code>
+                <button
+                  className="cube-play-overlay"
+                  onClick={() => play(activeStep.algorithm)}
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                    <polygon points="3,1 12,7 3,13" />
+                  </svg>
+                  {tx({ zh: '播放', en: 'Play' }, lang)}
+                </button>
+              </>
+            )}
+          </CubeViewer>
 
           <h2 style={{ marginTop: 22 }}>{tx(selected.title, lang)}</h2>
           <p className="lesson-summary">{tx(selected.summary, lang)}</p>
 
           {selected.steps.map((step, i) => (
-            <div className="step" key={i}>
+            <div
+              className={`step${step.algorithm ? ' step-has-alg' : ''}${activeStepIdx === i && step.algorithm ? ' step-active' : ''}`}
+              key={i}
+              onClick={step.algorithm ? () => setActiveStepIdx(i) : undefined}
+            >
               <div className="step-num">{i + 1}</div>
               <div className="step-body">
                 <p>{tx(step, lang)}</p>
                 {step.algorithm && (
                   <div className="alg">
                     <code>{step.algorithm}</code>
-                    <button className="play-btn" onClick={() => play(step.algorithm)}>
-                      {tx({ zh: '播放', en: 'Play' }, lang)}
-                    </button>
                   </div>
                 )}
               </div>
