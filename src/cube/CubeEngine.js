@@ -148,6 +148,7 @@ export default class CubeEngine {
 
     cubie.position.set(x, y, z);
     cubie.userData.pos = new THREE.Vector3(x, y, z);
+    cubie.userData.initialPos = new THREE.Vector3(x, y, z);
     this.cubies.push(cubie);
     return cubie;
   }
@@ -258,68 +259,81 @@ export default class CubeEngine {
     this.queue.push({ __pause: ms });
   }
 
-  /** Dim every cubie not in `cubies` by swapping its stickers to the gray mat. */
-  setFocus(cubies) {
-    const set = new Set(cubies);
-    for (const c of this.cubies) {
-      const dim = !set.has(c);
-      c.userData.dimmed = dim;
-      c.traverse((child) => {
-        if (child.isMesh && child.userData.key !== undefined) {
-          child.material = dim
-            ? this.stickerMatDim
-            : this.stickerMats[child.userData.key];
-        }
-      });
-    }
-  }
-
-  /** Convenience: highlight every cubie whose `axis` coordinate equals `layer`. */
-  setFocusLayer(axis, layer) {
-    const layerCubies = this.cubies.filter(
-      (c) => Math.round(c.userData.pos[axis]) === layer,
-    );
-    this.setFocus(layerCubies);
-  }
-
-  /** Restore original sticker materials on every dimmed cubie. */
-  clearFocus() {
-    for (const c of this.cubies) {
-      if (!c.userData.dimmed) continue;
-      c.userData.dimmed = false;
-      c.traverse((child) => {
-        if (child.isMesh && child.userData.key !== undefined) {
-          child.material = this.stickerMats[child.userData.key];
-        }
-      });
-    }
-  }
-
   /**
-   * Play `seq` with the given layer highlighted: dim everything outside the
-   * layer, then animate the moves. The dimming persists after playback so the
-   * user can inspect the result; reset / scramble clears it.
+   * Recolor every sticker on the five visible faces (U, F, R, L, B) to match
+   * a 45-character dataFl string from speedcubedb.
+   *
+   * dataFl is row-major per face in this order: U(9) F(9) R(9) L(9) B(9).
+   * Each character describes one sticker's colour:
+   *   l = gray (don't-care / dim)
+   *   g = green  → engine R face colour
+   *   w = white  → engine D face colour
+   *   o = orange → engine B face colour
+   * The D face (not in dataFl) keeps its natural white colour, which is the
+   * correct cross colour for F2L.
+   *
+   * Call after `reset()` on a solved cube. Because we match stickers by the
+   * cubie's solved position, the recoloured stickers follow the pieces if the
+   * cube is later scrambled.
    */
-  playWithFocusLayer(axis, layer, input) {
-    this.setFocusLayer(axis, layer);
-    this.enqueue(input);
-  }
+  applyDataFl(dataFl) {
+    if (!dataFl || dataFl.length < 45) return;
 
-  /**
-   * Highlight the given layer without playing anything — used when a formula
-   * is selected so the user can see the case's signature (e.g. the yellow
-   * cross + corners for OLL) before hitting Play. The dimming persists until
-   * reset / scramble clears it.
-   */
-  previewFocusLayer(axis, layer) {
-    this.setFocusLayer(axis, layer);
+    // (faceIdx, stickerPos) → cubie [x,y,z]. Mirrors STICKER_MAP in
+    // scripts/gen_f2l_complete.mjs so the dataFl and engine agree.
+    const stickerMap = [
+      // 0: U — viewed from +y, top row = back (z=-1)
+      [[-1,1,-1],[0,1,-1],[1,1,-1], [-1,1,0],[0,1,0],[1,1,0], [-1,1,1],[0,1,1],[1,1,1]],
+      // 1: F — viewed from +z, top row = top (y=+1)
+      [[-1,1,1],[0,1,1],[1,1,1], [-1,0,1],[0,0,1],[1,0,1], [-1,-1,1],[0,-1,1],[1,-1,1]],
+      // 2: R — viewed from +x, top row = top, left = front (z=+1)
+      [[1,1,1],[1,1,0],[1,1,-1], [1,0,1],[1,0,0],[1,0,-1], [1,-1,1],[1,-1,0],[1,-1,-1]],
+      // 3: L — viewed from -x, top row = top, left = back (z=-1)
+      [[-1,1,-1],[-1,1,0],[-1,1,1], [-1,0,-1],[-1,0,0],[-1,0,1], [-1,-1,-1],[-1,-1,0],[-1,-1,1]],
+      // 4: B — viewed from -z, top row = top, left = cube's right (x=+1)
+      [[1,1,-1],[0,1,-1],[-1,1,-1], [1,0,-1],[0,0,-1],[-1,0,-1], [1,-1,-1],[0,-1,-1],[-1,-1,-1]],
+    ];
+
+    // faceIdx → sticker key (matches _makeCubie's `userData.key`).
+    const faceKey = ['U', 'F', 'R', 'L', 'B'];
+    // dataFl char → material. Engine palette: R=green, D=white, B=orange.
+    const colorOf = (ch) => {
+      if (ch === 'g') return this.stickerMats.R;
+      if (ch === 'w') return this.stickerMats.D;
+      if (ch === 'o') return this.stickerMats.B;
+      return this.stickerMatDim; // 'l' or anything else
+    };
+
+    // Build a lookup from solved position → cubie.
+    const byPos = new Map();
+    for (const c of this.cubies) {
+      const p = c.userData.initialPos || c.userData.pos;
+      byPos.set(`${Math.round(p.x)},${Math.round(p.y)},${Math.round(p.z)}`, c);
+    }
+
+    for (let i = 0; i < 45; i++) {
+      const faceIdx = Math.floor(i / 9);
+      const stickerPos = i % 9;
+      const pos = stickerMap[faceIdx][stickerPos];
+      // Skip the virtual centre cubie — no sticker exists there.
+      if (pos[0] === 0 && pos[1] === 0 && pos[2] === 0) continue;
+      const cubie = byPos.get(`${pos[0]},${pos[1]},${pos[2]}`);
+      if (!cubie) continue;
+      const wantKey = faceKey[faceIdx];
+      const mat = colorOf(dataFl[i]);
+      for (const child of cubie.children) {
+        if (child.isMesh && child.userData.key === wantKey) {
+          child.material = mat;
+          break;
+        }
+      }
+    }
   }
 
   scramble(n = 20) {
     this.queue = [];
     this.current = null;
     this.pauseUntil = 0;
-    this.clearFocus();
     const seq = randomScramble(n);
     this.queue.push(...seq);
     return seq;

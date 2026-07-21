@@ -1,8 +1,7 @@
 /**
- * Cloudflare Worker: API for the categorized Rubik's-cube formula library,
+ * Cloudflare Worker: API for the F2L formula library,
  * backed by D1 (SQLite). The schema is created lazily and the database is
- * seeded from the built-in algorithm data on first use, so the app works
- * out-of-the-box in both local dev and production.
+ * seeded from the built-in F2L data on first use.
  *
  * The Worker also serves the static SPA (via the ASSETS binding) for every
  * non-API request, preserving client-side routing.
@@ -17,12 +16,10 @@
  *   POST   /api/formulas               create a formula (requires login)
  *   PUT    /api/formulas/:id           update a formula (requires login)
  *   DELETE /api/formulas/:id           delete a formula (requires login)
- *   POST   /api/seed                   seed built-in data if the table is empty (requires login)
+ *   POST   /api/reseed                 clear DB and re-import all formulas from file (requires login)
  */
 
-import { OLL_2LOOK, PLL_COMMON } from '../src/cube/algorithms.js';
-import { ALL_LESSONS } from '../src/content/lessons.js';
-import { invertSequence, toSequence } from '../src/cube/moves.js';
+import F2L_DATA from '../src/content/f2l_data.json' with { type: 'json' };
 
 /* ------------------------------------------------------------------ schema */
 
@@ -37,6 +34,7 @@ const SCHEMA_STATEMENTS = [
     'state_features_en TEXT NOT NULL DEFAULT \'\', ' +
     'algorithm TEXT NOT NULL DEFAULT \'\', ' +
     'tags TEXT NOT NULL DEFAULT \'[]\', ' +
+    'state_data TEXT DEFAULT NULL, ' +
     'creator TEXT NOT NULL DEFAULT \'system\', ' +
     'description_zh TEXT NOT NULL DEFAULT \'\', ' +
     'description_en TEXT NOT NULL DEFAULT \'\', ' +
@@ -59,6 +57,7 @@ const SCHEMA_STATEMENTS = [
 const COLS = [
   'id', 'name_zh', 'name_en', 'category', 'initial_state',
   'state_features_zh', 'state_features_en', 'algorithm', 'tags',
+  'state_data',
   'creator', 'description_zh', 'description_en', 'created_at', 'updated_at',
 ];
 
@@ -86,6 +85,7 @@ function rowToFormula(row) {
     state_features: { zh: row.state_features_zh, en: row.state_features_en },
     algorithm: row.algorithm,
     tags: parseTags(row.tags),
+    state_data: row.state_data ? JSON.parse(row.state_data) : null,
     creator: row.creator,
     description: { zh: row.description_zh, en: row.description_en },
     created_at: row.created_at,
@@ -105,6 +105,7 @@ function inputToRow(input, now) {
     state_features_en: input.state_features?.en ?? '',
     algorithm: input.algorithm ?? '',
     tags: JSON.stringify(tags),
+    state_data: input.state_data ? JSON.stringify(input.state_data) : null,
     creator: input.creator ?? 'system',
     description_zh: input.description?.zh ?? '',
     description_en: input.description?.en ?? '',
@@ -129,6 +130,7 @@ function mergeRow(existing, body) {
     state_features_en: body.state_features?.en ?? existing.state_features_en,
     algorithm: body.algorithm ?? existing.algorithm,
     tags,
+    state_data: body.state_data !== undefined ? JSON.stringify(body.state_data) : existing.state_data,
     creator: body.creator ?? existing.creator,
     description_zh: body.description?.zh ?? existing.description_zh,
     description_en: body.description?.en ?? existing.description_en,
@@ -145,60 +147,22 @@ function buildSeed() {
   const now = Date.now();
   const rows = [];
 
-  for (const e of OLL_2LOOK) {
-    const tags = ['OLL', e.pattern ? 'cross' : 'corners'];
-    rows.push(
-      inputToRow(
-        {
-          id: e.id,
-          name: e.name,
-          category: 'OLL',
-          initial_state: e.setup ?? '',
-          state_features: e.hint ?? { zh: '', en: '' },
-          algorithm: e.algorithm ?? '',
-          tags,
-          creator: 'system',
-          description: e.hint ?? { zh: '', en: '' },
-        },
-        now,
-      ),
-    );
-  }
-
-  for (const e of PLL_COMMON) {
-    rows.push(
-      inputToRow(
-        {
-          id: e.id,
-          name: e.name,
-          category: 'PLL',
-          initial_state: e.setup ?? '',
-          algorithm: e.algorithm ?? '',
-          tags: ['PLL'],
-          creator: 'system',
-        },
-        now,
-      ),
-    );
-  }
-
-  for (const lesson of ALL_LESSONS) {
-    (lesson.steps ?? []).forEach((step, i) => {
-      if (!step || !step.algorithm) return;
-      const setup = invertSequence(toSequence(step.algorithm)).join(' ');
+  for (const entry of F2L_DATA) {
+    const caseStr = String(entry.case).padStart(2, '0');
+    entry.algorithms.forEach((alg, i) => {
       rows.push(
         inputToRow(
           {
-            id: `lesson-${lesson.id}-${i}`,
+            id: `f2l-${caseStr}-${i}`,
             name: {
-              zh: `${lesson.title?.zh ?? lesson.id} · 步骤${i + 1}`,
-              en: `${lesson.title?.en ?? lesson.id} · Step ${i + 1}`,
+              zh: `F2L ${entry.case} · 公式${i + 1}`,
+              en: `F2L ${entry.case} · Alg ${i + 1}`,
             },
-            category: 'Lesson',
-            initial_state: setup,
-            state_features: { zh: step.zh ?? '', en: step.en ?? '' },
-            algorithm: step.algorithm,
-            tags: [lesson.levelId, lesson.id],
+            category: 'F2L',
+            initial_state: entry.setup,
+            algorithm: alg,
+            tags: ['F2L', `case_${entry.case}`, entry.subgroup, entry.dataFl],
+            state_data: entry.coloredPositions,
             creator: 'system',
           },
           now,
@@ -213,6 +177,12 @@ function buildSeed() {
 async function ensureSchema(db) {
   for (const stmt of SCHEMA_STATEMENTS) {
     await db.prepare(stmt).run();
+  }
+  // Migrate: add state_data column if missing (existing DBs)
+  try {
+    await db.prepare("ALTER TABLE formulas ADD COLUMN state_data TEXT DEFAULT NULL").run();
+  } catch {
+    // column already exists — ignore
   }
 }
 
@@ -378,13 +348,10 @@ async function handleApi(request, url, db) {
     return Response.json({ categories: results.map((r) => r.category) });
   }
 
-  if (pathname === '/api/seed' && method === 'POST') {
-    const { results } = await db.prepare('SELECT COUNT(*) AS c FROM formulas').all();
-    if ((results[0]?.c ?? 0) > 0) {
-      return Response.json({ seeded: false, message: 'already populated' });
-    }
+  if (pathname === '/api/reseed' && method === 'POST') {
+    await db.prepare('DELETE FROM formulas').run();
     await seed(db);
-    return Response.json({ seeded: true });
+    return Response.json({ reseeded: true });
   }
 
   if (pathname === '/api/formulas') {

@@ -41,8 +41,8 @@ export const formulasApi = {
   /** Distinct categories present in the database. */
   categories: () => req('/categories'),
 
-  /** Seed built-in data if the table is empty. */
-  seed: () => req('/seed', { method: 'POST' }),
+  /** Clear DB and re-import all formulas from the built-in file. */
+  reseed: () => req('/reseed', { method: 'POST' }),
 };
 
 export const authApi = {

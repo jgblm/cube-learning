@@ -19,9 +19,6 @@ const EMPTY_FORM = {
   description_en: '',
 };
 
-/** Categories that benefit from U-layer highlight during playback. */
-const FOCUS_CATEGORIES = new Set(['OLL', 'PLL']);
-
 function FormulaCard({ formula, lang, isSelected, onSelect, onPlay, onEdit, onDelete }) {
   return (
     <div className={`formula-card${isSelected ? ' selected' : ''}`} onClick={() => onSelect(formula)}>
@@ -31,11 +28,14 @@ function FormulaCard({ formula, lang, isSelected, onSelect, onPlay, onEdit, onDe
       </div>
       {formula.tags.length > 0 && (
         <div className="tag-row">
-          {formula.tags.map((t) => (
-            <span key={t} className="tag">
-              {t}
-            </span>
-          ))}
+          {formula.tags
+            // Hide the 45-char dataFl string — it's used for 3D rendering, not display.
+            .filter((t) => !(t.length === 45 && /^[lgwo]+$/.test(t)))
+            .map((t) => (
+              <span key={t} className="tag">
+                {t}
+              </span>
+            ))}
         </div>
       )}
       {tx(formula.state_features, lang) && (
@@ -206,22 +206,28 @@ export default function FormulaLibrary() {
         formulasApi.list(activeCat || undefined),
         formulasApi.categories(),
       ]);
-      let list = fRes.formulas || [];
-      let cats = cRes.categories || [];
-      if (list.length === 0 && cats.length === 0) {
-        await formulasApi.seed();
-        const [f2, c2] = await Promise.all([formulasApi.list(), formulasApi.categories()]);
-        list = f2.formulas || [];
-        cats = c2.categories || [];
-      }
-      setFormulas(list);
-      setCategories(cats);
+      setFormulas(fRes.formulas || []);
+      setCategories(cRes.categories || []);
     } catch (e) {
       setError(e.message);
     } finally {
       setLoadingData(false);
     }
   }, [activeCat]);
+
+  const reimport = async () => {
+    if (!window.confirm(tx({ zh: '将清空所有公式并重新导入，确认？', en: 'This will clear all formulas and re-import. Continue?' }, lang))) return;
+    setLoadingData(true);
+    setError(null);
+    try {
+      await formulasApi.reseed();
+      await load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoadingData(false);
+    }
+  };
 
   // Load formulas only once the user is authenticated.
   useEffect(() => {
@@ -233,16 +239,18 @@ export default function FormulaLibrary() {
     const viewer = viewerRef.current;
     if (!viewer) return;
     viewer.reset();
-    if (f.initial_state) viewer.applyInstant(f.initial_state);
-    if (FOCUS_CATEGORIES.has(f.category)) viewer.previewFocusLayer('y', 1);
+    // Render the dataFl colour map (45-char sticker palette) onto the solved
+    // cube: each of the 5×9 stickers is recoloured to the colour it would
+    // have in the F2L case state, and 'l' cells become dim. Setup moves are
+    // NOT executed — dataFl alone is enough to paint the case-state picture.
+    const dataFl = f.tags.find((t) => t.length === 45 && /^[lgwo]+$/.test(t));
+    if (dataFl) viewer.applyDataFl(dataFl);
   };
 
   const playFormula = (f) => {
     const viewer = viewerRef.current;
     if (!viewer) return;
-    if (selectedId !== f.id) selectFormula(f);
-    if (FOCUS_CATEGORIES.has(f.category)) viewer.playWithFocusLayer('y', 1, f.algorithm);
-    else viewer.play(f.algorithm);
+    viewer.play(f.algorithm);
   };
 
   const openNew = () => setFormOpen({ ...EMPTY_FORM, creator: user?.username || 'system' });
@@ -328,8 +336,8 @@ export default function FormulaLibrary() {
           <p className="section-sub">
             {tx(
               {
-                zh: '所有公式已分类存入 Cloudflare D1。点击卡片在 3D 魔方上预览与播放，也可新增、编辑、删除。',
-                en: 'All formulas are categorized in Cloudflare D1. Click a card to preview and play on the 3D cube, or add / edit / delete entries.',
+                zh: 'F2L 公式已分类存入 Cloudflare D1。点击卡片在 3D 魔方上预览与播放，也可新增、编辑、删除。',
+                en: 'F2L formulas are categorized in Cloudflare D1. Click a card to preview and play on the 3D cube, or add / edit / delete entries.',
               },
               lang,
             )}
@@ -339,6 +347,9 @@ export default function FormulaLibrary() {
           <span className="lib-user">{user.username}</span>
           <button className="ghost-btn" onClick={logout}>
             {tx({ zh: '退出', en: 'Logout' }, lang)}
+          </button>
+          <button className="ghost-btn" onClick={reimport} disabled={loadingData}>
+            {tx({ zh: '重新导入', en: 'Re-import' }, lang)}
           </button>
           <button className="ctrl-btn primary" onClick={openNew}>
             {tx({ zh: '新增公式', en: 'New Formula' }, lang)}

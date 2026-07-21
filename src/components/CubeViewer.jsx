@@ -50,10 +50,7 @@ const CubeViewer = forwardRef(function CubeViewer(_props, ref) {
     pause: (ms) => engineRef.current?.pause(ms),
     setSpeed: (m) => engineRef.current?.setSpeed(m),
     applyInstant: (seq) => engineRef.current?.applyInstant(seq),
-    playWithFocusLayer: (axis, layer, seq) =>
-      engineRef.current?.playWithFocusLayer(axis, layer, seq),
-    previewFocusLayer: (axis, layer) =>
-      engineRef.current?.previewFocusLayer(axis, layer),
+    applyDataFl: (dataFl) => engineRef.current?.applyDataFl(dataFl),
   }));
 
   const onKey = (e) => {

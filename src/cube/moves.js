@@ -24,16 +24,16 @@ export const SCRAMBLE_FACES = ['U', 'D', 'L', 'R', 'F', 'B'];
  *           is positive). Prime moves flip the sign; doubles keep it.
  */
 export const FACE_DEF = {
-  U: { axis: 'y', layer: 1, sign: 1 },
-  D: { axis: 'y', layer: -1, sign: -1 },
+  U: { axis: 'y', layer: 1, sign: -1 },
+  D: { axis: 'y', layer: -1, sign: 1 },
   L: { axis: 'x', layer: -1, sign: 1 },
   R: { axis: 'x', layer: 1, sign: -1 },
-  F: { axis: 'z', layer: 1, sign: 1 },
-  B: { axis: 'z', layer: -1, sign: -1 },
+  F: { axis: 'z', layer: 1, sign: -1 },
+  B: { axis: 'z', layer: -1, sign: 1 },
   // Slices turn in the same rotational sense as their reference face.
   M: { axis: 'x', layer: 0, sign: 1 }, // matches L
-  E: { axis: 'y', layer: 0, sign: -1 }, // matches D
-  S: { axis: 'z', layer: 0, sign: 1 }, // matches F
+  E: { axis: 'y', layer: 0, sign: 1 }, // matches D
+  S: { axis: 'z', layer: 0, sign: -1 }, // matches F
   // Whole-cube rotations: every cubie turns, so there is no single layer.
   x: { axis: 'x', layer: null, sign: -1 },
   y: { axis: 'y', layer: null, sign: -1 },
