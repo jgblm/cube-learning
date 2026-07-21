@@ -1,7 +1,20 @@
 import { useRef, useState } from 'react';
 import CubeViewer from './CubeViewer.jsx';
 import { OLL_2LOOK, PLL_COMMON } from '../cube/algorithms.js';
+import F2L_DATA from '../content/f2l_data.json';
 import { useLang, tx } from '../i18n/LangContext.jsx';
+
+/** Flatten the built-in F2L library (the data that seeds the formula library)
+ *  into playable cards — one per algorithm — so its cases appear here too. */
+const F2L_ENTRIES = F2L_DATA.flatMap((c) =>
+  c.algorithms.map((alg, i) => ({
+    id: `f2l-${c.case}-${i}`,
+    name: { zh: `F2L ${c.case}`, en: `F2L ${c.case}` },
+    hint: { zh: c.subgroup, en: c.subgroup },
+    setup: c.setup,
+    algorithm: alg,
+  })),
+);
 
 /** Small 3x3 top-face diagram; 1 = yellow sticker. */
 function FaceSVG({ pattern }) {
@@ -95,8 +108,8 @@ export default function FormulaSheet() {
       <div className="note">
         {tx(
           {
-            zh: '本表为教学精选集：两步 OLL（约 8 例）+ 常用 PLL（17 例），并非完整 57 OLL / 21 PLL。公式为标准 CFOP，练习时请自行核对。',
-            en: 'Curated teaching set: two-look OLL (~8) + common PLL (17), not the full 57 OLL / 21 PLL. Algorithms are standard CFOP — verify against your own practice.',
+            zh: '本表为教学精选集：两步 OLL（约 8 例）+ 常用 PLL（17 例）+ F2L 公式库（41 例），并非完整 57 OLL / 21 PLL。公式为标准 CFOP，练习时请自行核对。',
+            en: 'Curated teaching set: two-look OLL (~8) + common PLL (17) + the F2L library (41 cases), not the full 57 OLL / 21 PLL. Algorithms are standard CFOP — verify against your own practice.',
           },
           lang,
         )}
@@ -104,7 +117,7 @@ export default function FormulaSheet() {
 
       <CubeViewer ref={viewerRef}>
         {selectedId && (() => {
-          const entry = [...OLL_2LOOK, ...PLL_COMMON].find((e) => e.id === selectedId);
+          const entry = [...OLL_2LOOK, ...PLL_COMMON, ...F2L_ENTRIES].find((e) => e.id === selectedId);
           return entry && (
             <>
               <code className="cube-label-overlay">{entry.algorithm}</code>
@@ -143,6 +156,22 @@ export default function FormulaSheet() {
       </h2>
       <div className="formula-grid">
         {PLL_COMMON.map((e) => (
+          <Card
+            key={e.id}
+            entry={e}
+            onPlay={playAlgorithm}
+            lang={lang}
+            isSelected={selectedId === e.id}
+            onSelect={selectFormula}
+          />
+        ))}
+      </div>
+
+      <h2 className="section-title" style={{ fontSize: 18, marginTop: 26 }}>
+        {tx({ zh: 'F2L（公式库）', en: 'F2L (from library)' }, lang)}
+      </h2>
+      <div className="formula-grid">
+        {F2L_ENTRIES.map((e) => (
           <Card
             key={e.id}
             entry={e}
