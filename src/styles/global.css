@@ -101,21 +101,6 @@ a {
   box-shadow: inset 0 0 0 1px var(--border);
 }
 
-.lang-toggle {
-  border: 1px solid var(--border);
-  background: var(--bg-soft);
-  color: var(--text);
-  padding: 7px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.lang-toggle:hover {
-  border-color: var(--accent);
-}
-
 /* Top nav is hidden on mobile (navigation moves to the bottom tab bar). */
 .top-nav {
   display: flex;
@@ -158,22 +143,6 @@ a {
 
 .bottom-nav a.active {
   color: var(--accent);
-}
-
-.bottom-nav-lang {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--text-dim);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 /* ---------- Layout ---------- */
@@ -431,68 +400,131 @@ a {
   justify-content: center;
 }
 
-/* ---------- Header user / login ---------- */
-.user-area {
-  display: flex;
+/* ---------- User menu (login / library / language) ---------- */
+.user-menu {
+  position: relative;
+}
+
+/* Desktop trigger (sits in .header): text pill matching the old login/lang buttons. */
+.header .user-menu-trigger {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-}
-
-.user-chip {
-  padding: 5px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--bg-soft);
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 600;
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.logout-btn,
-.login-btn {
-  padding: 6px 12px;
+  gap: 6px;
+  padding: 7px 12px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--bg-soft);
   color: var(--text);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.12s, border-color 0.12s;
 }
 
-.login-btn {
-  text-decoration: none;
-}
-
-.logout-btn:hover,
-.login-btn:hover {
+.header .user-menu-trigger:hover {
   border-color: var(--accent);
   background: #20283a;
 }
 
-.bottom-nav-login,
-.bottom-nav-logout {
+.header .user-menu-trigger .icon {
+  display: none;
+}
+
+.header .user-menu.is-authed .user-menu-trigger {
+  color: var(--accent);
+}
+
+/* Dropdown panel. */
+.user-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 172px;
+  background: rgba(20, 23, 31, 0.98);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  padding: 4px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-menu-header {
+  padding: 8px 10px 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.user-menu-item:hover {
+  background: var(--bg-soft);
+  color: var(--accent);
+}
+
+.user-menu-item .mi-icon {
+  display: grid;
+  place-items: center;
+  opacity: 0.85;
+}
+
+/* Mobile: trigger looks like a bottom-nav tab item, dropdown opens upward. */
+.bottom-nav .user-menu {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.bottom-nav .user-menu-trigger {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 4px 6px;
-  background: transparent;
+  justify-content: center;
+  gap: 3px;
+  background: none;
   border: none;
+  padding: 0;
   color: var(--text-dim);
   font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
 }
 
-.bottom-nav-login.active,
-.bottom-nav-login:hover,
-.bottom-nav-logout:hover {
+.bottom-nav .user-menu-trigger .icon {
+  display: grid;
+  place-items: center;
+  height: 24px;
+}
+
+.bottom-nav .user-menu.is-authed .user-menu-trigger {
   color: var(--accent);
+}
+
+.bottom-nav .user-menu-dropdown {
+  top: auto;
+  bottom: calc(100% + 6px);
+  right: 4px;
 }
 
 /* ---------- Lessons ---------- */

@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useLang } from '../i18n/LangContext.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
+import UserMenu from './UserMenu.jsx';
 
 const ICONS = {
   home: (
@@ -31,13 +31,6 @@ const ICONS = {
       <path d="M18 14l1 2.5L21.5 17 19 18l-1 2.5L17 18l-2.5-1L17 15.5z" />
     </svg>
   ),
-  library: (
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 5.5A2 2 0 0 1 6 4h4a2 2 0 0 1 2 2v12.5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2z" />
-      <path d="M10 6.5h4a2 2 0 0 1 2 2v10.5a2 2 0 0 0-2-2h-4" />
-      <path d="M16 8.5h2a2 2 0 0 1 2 2v8.5" />
-    </svg>
-  ),
 };
 
 const NAV = [
@@ -45,37 +38,10 @@ const NAV = [
   { to: '/learn', key: 'learn', icon: 'learn', zh: '课程', en: 'Lessons' },
   { to: '/formulas', key: 'formulas', icon: 'formulas', zh: '公式', en: 'Formulas' },
   { to: '/solver', key: 'solver', icon: 'solver', zh: '求解', en: 'Solver' },
-  { to: '/library', key: 'library', icon: 'library', zh: '公式库', en: 'Library' },
 ];
 
 export default function Header() {
-  const { lang, toggle } = useLang();
-  const { user, logout } = useAuth();
-
-  const authDesktop = user ? (
-    <div className="user-area">
-      <span className="user-chip" title={user.username}>
-        {user.username}
-      </span>
-      <button className="logout-btn" onClick={logout}>
-        {lang === 'zh' ? '退出' : 'Logout'}
-      </button>
-    </div>
-  ) : (
-    <NavLink to="/library" className="login-btn">
-      {lang === 'zh' ? '登录' : 'Login'}
-    </NavLink>
-  );
-
-  const authMobile = user ? (
-    <button className="bottom-nav-logout" onClick={logout} title="退出 / Logout">
-      <span className="label">{lang === 'zh' ? '退出' : 'Logout'}</span>
-    </button>
-  ) : (
-    <NavLink to="/library" className="bottom-nav-login" title="登录 / Login">
-      <span className="label">{lang === 'zh' ? '登录' : 'Login'}</span>
-    </NavLink>
-  );
+  const { lang } = useLang();
 
   return (
     <>
@@ -96,10 +62,7 @@ export default function Header() {
             </NavLink>
           ))}
         </nav>
-        {authDesktop}
-        <button className="lang-toggle" onClick={toggle} title="切换语言 / Switch language">
-          {lang === 'zh' ? 'EN' : '中文'}
-        </button>
+        <UserMenu />
       </header>
 
       <nav className="bottom-nav" aria-label="主导航">
@@ -114,10 +77,7 @@ export default function Header() {
             <span className="label">{item[lang]}</span>
           </NavLink>
         ))}
-        {authMobile}
-        <button className="bottom-nav-lang" onClick={toggle} title="切换语言 / Switch language">
-          <span className="label">{lang === 'zh' ? 'EN' : '中文'}</span>
-        </button>
+        <UserMenu />
       </nav>
     </>
   );
