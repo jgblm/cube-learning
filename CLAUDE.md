@@ -23,7 +23,7 @@ The defining decision is a **strict split between a framework-agnostic 3D engine
 - **Move notation is a pure, dependency-free layer** in `src/cube/moves.js` (`normalize`, `invert`, `invertSequence`, `toSequence`, `randomScramble`, plus `FACE_DEF`). It has no Three.js import and can be used/tested in isolation. `CubeEngine._resolve` maps a move string → `{ axis, layer, axisVec, angle }` using `FACE_DEF` + `normalize`, so the turn geometry and the notation stay decoupled.
 - **`src/components/CubeViewer.jsx`** — the only React↔engine bridge. It is a `forwardRef` component exposing an imperative handle `{ play(seq), scramble(n), reset(), setSpeed(mult) }` via `useImperativeHandle`. Feature pages hold a `ref` to `CubeViewer` and call these to drive the cube. Keyboard turns (letter = CW, `Shift`+letter = prime) and on-screen buttons also route through `engine.enqueue`.
 
-Feature pages (`LessonView`, `FormulaSheet`, `SolverDemo`, `Home`) each mount their **own** `CubeViewer`, so the engine is per-page and torn down on navigation. They are thin: they pull data from `src/content/lessons.js` (`LEVELS` → lessons → steps) and `src/cube/algorithms.js` (`OLL_2LOOK`, `PLL_COMMON`), and pass an entry's `algorithm` string to `ref.current.play(...)`.
+Feature pages (`LessonView`, `FormulaSheet`, `Timer`, `FormulaLibrary`) each mount their **own** `CubeViewer`, so the engine is per-page and torn down on navigation. They are thin: they pull data from `src/content/lessons.js` (`LEVELS` → lessons → steps) and `src/cube/algorithms.js` (`OLL_2LOOK`, `PLL_COMMON`), and pass an entry's `algorithm` string to `ref.current.play(...)`.
 
 ### Rotation / animation model (non-obvious)
 
@@ -41,7 +41,7 @@ Lightweight `src/i18n/LangContext.jsx` (`useLang()` + `tx(value, lang)`). There 
 
 ### Solver
 
-`src/cube/solver.js` exposes `planInverseSolve(seq)` (reverse + invert each move → guaranteed solve) used by `SolverDemo`. `solveLBL()` is a **placeholder stub that throws**; a real LBL/two-phase solver is not implemented.
+`src/cube/solver.js` exposes `planInverseSolve(seq)` (reverse + invert each move → guaranteed solve) and `solveLBL()` — a **placeholder stub that throws**; a real LBL/two-phase solver is not implemented.
 
 ### Notation conventions
 

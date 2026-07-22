@@ -1,9 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header.jsx';
-import Home from './pages/Home.jsx';
 import LessonView from './components/LessonView.jsx';
 import FormulaSheet from './components/FormulaSheet.jsx';
-import SolverDemo from './components/SolverDemo.jsx';
+import Timer from './components/Timer.jsx';
 import FormulaLibrary from './pages/FormulaLibrary.jsx';
 
 export default function App() {
@@ -12,12 +11,11 @@ export default function App() {
       <Header />
       <main className="app-main">
         <Routes>
-          <Route path="/" element={<Home />} />
           <Route path="/learn" element={<LessonView />} />
           <Route path="/formulas" element={<FormulaSheet />} />
           <Route path="/library" element={<FormulaLibrary />} />
-          <Route path="/solver" element={<SolverDemo />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/timer" element={<Timer />} />
+          <Route path="*" element={<Navigate to="/learn" replace />} />
         </Routes>
       </main>
       <footer className="app-footer">

@@ -3,12 +3,6 @@ import { useLang } from '../i18n/LangContext.jsx';
 import UserMenu from './UserMenu.jsx';
 
 const ICONS = {
-  home: (
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 10.5 12 4l9 6.5" />
-      <path d="M5 9.5V20h14V9.5" />
-    </svg>
-  ),
   learn: (
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 5.5A2 2 0 0 1 6 4h9a2 2 0 0 1 2 2v12.5" />
@@ -24,20 +18,20 @@ const ICONS = {
       <rect x="13" y="13" width="7" height="7" rx="1.5" />
     </svg>
   ),
-  solver: (
+  timer: (
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 3v4M3 5h4" />
-      <path d="M12 3l1.5 3.5L17 8l-3.5 1.5L12 13l-1.5-3.5L7 8l3.5-1.5z" />
-      <path d="M18 14l1 2.5L21.5 17 19 18l-1 2.5L17 18l-2.5-1L17 15.5z" />
+      <circle cx="12" cy="13" r="8" />
+      <path d="M12 13V9" />
+      <path d="M9 2h6" />
+      <path d="M19 6l1.5-1.5" />
     </svg>
   ),
 };
 
 const NAV = [
-  { to: '/', key: 'home', icon: 'home', zh: '首页', en: 'Home' },
   { to: '/learn', key: 'learn', icon: 'learn', zh: '课程', en: 'Lessons' },
   { to: '/formulas', key: 'formulas', icon: 'formulas', zh: '公式', en: 'Formulas' },
-  { to: '/solver', key: 'solver', icon: 'solver', zh: '求解', en: 'Solver' },
+  { to: '/timer', key: 'timer', icon: 'timer', zh: '计时', en: 'Timer' },
 ];
 
 export default function Header() {

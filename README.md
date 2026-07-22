@@ -54,16 +54,16 @@ src/
 │   ├── CubeViewer.jsx  # 挂载引擎，暴露 play/scramble/reset/setSpeed
 │   ├── LessonView.jsx  # 分步课程
 │   ├── FormulaSheet.jsx# 公式速查
-│   └── SolverDemo.jsx  # 自动求解
+│   └── Timer.jsx       # 计时挑战
 ├── content/lessons.js  # 双语课程数据
 ├── i18n/LangContext.jsx
-└── pages/Home.jsx
+└── pages/FormulaLibrary.jsx
 ```
 
 ## 实现要点 Notes
 
 - **转动动画**：每个 cubie 是独立 `THREE.Group`；一次面转把该层 9 个 cubie 临时挂到 pivot 组做 90°/180° 缓动，结束后再烘焙回主组并更新逻辑坐标，贴纸颜色天然保持正确。
-- **求解演示**：采用「逆序还原」——打乱后把序列反向、每步取逆即可 100% 回到还原态。真正的层先（LBL）/ 二阶段求解器可作为后续扩展（见 `src/cube/solver.js` 的 `solveLBL` 占位）。
+- **计时挑战**：点击「打乱」生成随机公式，按空格开始/停止计时，并记录本次最佳与上次成绩。真正的层先（LBL）/ 二阶段求解器可作为后续扩展（见 `src/cube/solver.js` 的 `solveLBL` 占位）。
 - **配色**：BOY 相对面（黄上白下、红前橙后、蓝左绿右）——OLL/PLL 公式默认黄在顶。
 
 ## 扩展方向 Possible extensions

@@ -245,6 +245,17 @@ a {
   position: relative;
 }
 
+/* Timer page: wrap the cube viewport and its controls/readout in one card */
+.timer-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  padding: 16px;
+}
+.timer-card .cube-stage {
+  border: none;
+}
+
 .cube-stage {
   position: relative;
   width: 100%;
